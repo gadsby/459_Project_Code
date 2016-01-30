@@ -1,0 +1,6 @@
+Mains:
+
+Physical data collection
+Simulation (options for neural net or physical)
+Control scheme (options for neural net or physical)
+Data viewing and animation

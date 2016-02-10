@@ -1,7 +1,7 @@
 # DATA SAVING LIBRARY
 
 
-def getSessionDir():
+def getSessionDir(sourcePath):
 
 	"""getSessionDir: Returns the directory for a given session to be used for saving new files. Previous session IDs are checked and a unique ID is created.
 
@@ -12,10 +12,7 @@ def getSessionDir():
 	import datetime
 	import os
 
-	#TODO: will be set by file structure, maybe use proper config? put in main?
-	sourcePath = '/Users/olivergadsby/Desktop/Example'
-
-	#TODO: set as constant; 1 for Jan3-Jan9 start, maybe use proper config?
+	# set as constant; 1 for Jan3-Jan9 start
 	projectWeekStart = 1
 
 	today = datetime.date.today()

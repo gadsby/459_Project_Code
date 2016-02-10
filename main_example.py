@@ -8,8 +8,8 @@ import numpy as np
 import IO_Helpers_459
 
 
-sessionDir = IO_Helpers_459.getSessionDir()
-
+sourcePath = '/Users/olivergadsby/Desktop/ENPH 459/Results'
+sessionDir = IO_Helpers_459.getSessionDir(sourcePath)
 
 while True:
 	userInput = input('Press enter to collect data, type \'q\' to quit...\n')
@@ -21,6 +21,9 @@ while True:
 	# do stuff
 	print('Doing stuff...')
 
+	#preppingForFall()
+	#data = fallingControl()
+	#plotTorqueProfile()
 
 	print('Saving to {}'.format(saveName))
  	#IO_Helpers_459.saveData(data, saveName)

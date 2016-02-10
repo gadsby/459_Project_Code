@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import time
 import serial
 import roboclaw as rc
@@ -91,3 +92,57 @@ def SeekNext(t):
         rc.ForwardM2(address,PWM2)
     else:
         rc.BackwardM2(address,-PWM2)
+=======
+# EXECUTED WHILE FALLING
+
+
+def preppingForFall():
+
+	"""preppingForFall: 
+
+	Arguments:
+	(none)
+	"""
+
+	# read sensors
+	# wait for position to be ready, give continuous feedback
+	# alert when ready --> interface with some warning sign on Pi
+	# flip safety --> input y
+
+def duringFall():
+
+	"""duringFall: 
+
+	Arguments:
+	(none)
+	"""
+
+	# read sensors/encoders
+	# read current/torque values --> save to array
+
+	# start in caution mode
+	# if velocity profile exceeds value, start applying torques from torque list
+
+def torqueControl():
+
+	"""torqueControl: 
+
+	Arguments:
+	(none)
+	"""
+
+	return data
+
+
+def readSensors():
+	"""readSensors: 
+
+	Arguments:
+	(none)
+	"""
+
+	# read pins from gpio
+	# read encoder values from motor
+
+	pass
+>>>>>>> Stashed changes

@@ -1,14 +1,26 @@
+# TODO:
+# 1) Fill in functions with attempt to minimize # lines in this file
+# 2) Deal with passing ref values
+# 3) Require calibration to be done before fall
+
+
+import fallingStates
+
+
 
 # Sub-programs to be called in menu
 
-def zero_func():
-    print('Zero')
+def calibrate_func():
+    global ref
+    ref = [0]*3 # actually call ref function when doing this
+    print('Reference Positions: {}'.format(ref))
 
 def instruct_func():
 	print('Instructions')
+	# cubic spline interpolation stuff
 
-def primeForFall_func():
-	print('Prime for Falling')
+def readyForFall():
+	fallingStates.initiateFallMode()
 
 
 
@@ -22,9 +34,9 @@ if __name__ == "__main__":
 
 		# Define available options and functions; tuple in form of ('name', function)
 		menuOptions = { 
-			1:('Zero', zero_func),
+			1:('Calibrate', calibrate_func),
 			2:('Instructions', instruct_func),
-			3:('Prime for Falling', primeForFall_func),
+			3:('Initiate Fall Procedure', readyForFall),
 			4:('Exit', exit)
 			}
 		numOptions = len(menuOptions)
@@ -45,4 +57,3 @@ if __name__ == "__main__":
 			print('Invalid choice. Choose again.')
 
 		print('*'*100)
-

@@ -222,4 +222,3 @@ def initiateFallMode():
 		data = falling()
 		save_data(data)
 		return
-

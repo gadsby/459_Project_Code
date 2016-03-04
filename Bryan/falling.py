@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+#<<<<<<< Updated upstream
 import time
 import serial
 import roboclaw as rc

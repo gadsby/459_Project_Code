@@ -8,12 +8,10 @@ import threading
 from config import *
 
 # undeclared variables:
-address
+#address
 
 GPIO.setup(18, GPIO.IN)
 rc.Open("COM5", 115200)
-rc.ForwardM1(address,0)
-rc.ForwardM2(address,0)
 
 
 def killMotors():
@@ -22,25 +20,25 @@ def killMotors():
 
 
 # undeclared variables:
-angle1
-angle2
-accel
-speed
-decel
+#angle1
+#angle2
+#accel
+#speed
+#decel
 
 def set_motors():
-    print '\nSetting motors to initial position \n'
-    position1, position2 = f(angle1, angle2)
+    print('\nSetting motors to initial position \n')
+    position1, position2 = mapAngleToPulse(angle1, angle2)
     time.sleep(1)
     rc.SpeedAccelDeccelPositionM2(address,accel,speed,decel,position1,0)
     rc.SpeedAccelDeccelPositionM2(address,accel,speed,decel,position2,0)
     time.sleep(1.5)
-    print 'Motors set to ('+angle1+','+angle2+')'+' degrees \n'
+    print('Motors set to ('+angle1+','+angle2+')'+' degrees \n')
 
 
 # undeclared variables:
-pulse_per_deg
-ref # global; already dealt with
+#pulse_per_deg
+#ref # global; already dealt with
 
 def mapAngleToPulse(angle1,angle2):
     position1 = ref[0]-angle1*pulse_per_deg
@@ -49,12 +47,17 @@ def mapAngleToPulse(angle1,angle2):
 
 
 # undeclared variables:
-targetsList
-kp
-kd
-kw
-timing
-numberOfTargets
+#targetsList
+#kp
+#kd
+#kw
+#timing
+#numberOfTargets
+
+
+
+
+# fix instructions and event timing for falling program
 
 def falling():
 
@@ -63,6 +66,8 @@ def falling():
     timeStart = time.clock()
     count, index, lastError1, lastError2, pwm1, pwm2 = [0]*6
 
+    # define numpy array of appropriate size
+
     while time.clock() - timeStart < 0.8:
         target1,target2 = targetsList(index)
         readSuccessful, current1, current2 = rc.ReadCurrents(address)
@@ -70,6 +75,8 @@ def falling():
         w2 = rc.ReadSpeedM2(address)
 
     # TODO: Save all fields collected during control loop
+
+    # save angles into array
 
         if readSuccessful:
             # Find increments to PWM
@@ -81,8 +88,15 @@ def falling():
             pwm1, pwm2 = pwm1+increment1, pwm2+increment2
             pwm1, pwm2 = min(abs(pwm1), 255) * pwm1/abs(pwm1), min(abs(pwm2), 255) * pwm2/abs(pwm2)
 
-        rc.ForwardM1(address,pwm1) if pwm1 >= 0 else rc.BackwardM1(address,-pwm1)
-        rc.ForwardM2(address,pwm2) if pwm1 >= 0 else rc.BackwardM2(address,-pwm2)
+        if pwm1 >= 0:
+            rc.ForwardM1(address,pwm1)
+        else:
+            rc.BackwardM1(address,-pwm1)
+
+        if pwm1 >= 0:
+            rc.ForwardM2(address,pwm2)
+        else:
+            rc.BackwardM2(address,-pwm2)
 
         count += 1
         index = count % timing
@@ -90,8 +104,7 @@ def falling():
         if index > numberOfTargets:
             index = numberOfTargets
         else:
-            rc.ForwardM1(address,0)
-            rc.ForwardM2(address,0)
+            killMotors()
 
     return [0]*5 # data output here
 

@@ -22,8 +22,8 @@ class fallConditionCheck (threading.Thread):
 			x += 1 # read angle 2
 			y += 1 # read angle 3
 			print(w,x,y)
-			time.sleep(0.5)
-			if y==x==w==5:
+			time.sleep(0.3)
+			if y==x==w==3:
 				self.successEvent.set()
 				return
 

@@ -1,110 +1,73 @@
 import roboclaw as rc
-import instructions
-import time
 import RPi.GPIO as GPIO
-import serial
-import data
-import threading
-from config import *
+import config
+
+
+
+GPIO.setup(config.gpioPin, GPIO.IN)
+
+
+for port in config.comPorts:
+    try:
+        rc.Open(port, config.baudRate)
+    except:
+        continue
+
+# do something if none of the ports work
+
+
 
 # undeclared variables:
-#address
-
-GPIO.setup(18, GPIO.IN)
-rc.Open("COM5", 115200)
-
-
-def killMotors():
-    rc.ForwardM1(address,0)
-    rc.ForwardM2(address,0)
-
-
-# undeclared variables:
-#angle1
-#angle2
 #accel
 #speed
 #decel
 
+
 def set_motors():
-    print('\nSetting motors to initial position \n')
-    position1, position2 = mapAngleToPulse(angle1, angle2)
+    position_Knee, position_Hip = mapAngleToPulse(config.initialAngle_Knee, config.initialAngle_Hip)
     time.sleep(1)
-    rc.SpeedAccelDeccelPositionM2(address,accel,speed,decel,position1,0)
-    rc.SpeedAccelDeccelPositionM2(address,accel,speed,decel,position2,0)
+    rc.SpeedAccelDeccelPositionM1(config.address, accel, speed, decel, position_Knee, 0)
+    rc.SpeedAccelDeccelPositionM2(config.address, accel, speed, decel, position_Hip, 0)
     time.sleep(1.5)
-    print('Motors set to ('+angle1+','+angle2+')'+' degrees \n')
+    print('Knee Angle set to {}'.format(config.initialAngle_Knee))
+    print('Hip Angle set to {}'.format(config.initialAngle_Hip))
 
 
-# undeclared variables:
-#pulse_per_deg
-#ref # global; already dealt with
 
-def mapAngleToPulse(angle1,angle2):
-    position1 = ref[0]-angle1*pulse_per_deg
-    position2 = ref[1]-angle2*pulse_per_deg
-    return position1, position2
-
-
-# undeclared variables:
-#targetsList
-#kp
-#kd
-#kw
-#timing
-#numberOfTargets
+def mapAngleToPulse(initialAngle_Knee, initialAngle_Hip):
+    position_Knee = config.calibratedValues[0]-initialAngle_Knee * config.pulsePerRotation
+    position_Hip = config.calibratedValues[1]-initialAngle_Hip * config.pulsePerRotation
+    return position_Knee, position_Hip
 
 
 
 
-# fix instructions and event timing for falling program
 
-def falling():
 
-    print('\nFALLING: Here I go falling!')
 
-    timeStart = time.clock()
-    count, index, lastError1, lastError2, pwm1, pwm2 = [0]*6
 
-    # define numpy array of appropriate size
 
-    while time.clock() - timeStart < 0.8:
-        target1,target2 = targetsList(index)
-        readSuccessful, current1, current2 = rc.ReadCurrents(address)
-        w1 = rc.ReadSpeedM1(address)
-        w2 = rc.ReadSpeedM2(address)
 
-    # TODO: Save all fields collected during control loop
 
-    # save angles into array
+import readline,thread
+import sys,struct,fcntl,termios
 
-        if readSuccessful:
-            # Find increments to PWM
-            thisError1, thisError2 = target1-current1, target2-current2
-            increment1, increment2 = kp*thisError1+kd*(thisError1-lastError1)+kw*w1, kp*thisError2+kd*(thisError2-lastError2)+kw*w2
+def blank_current_readline():
+    # Next line said to be reasonably portable for various Unixes
+    (rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
+    text_len = len(readline.get_line_buffer())+2
 
-            # Update errors
-            lastError1, lastError2 = thisError1, thisError2
-            pwm1, pwm2 = pwm1+increment1, pwm2+increment2
-            pwm1, pwm2 = min(abs(pwm1), 255) * pwm1/abs(pwm1), min(abs(pwm2), 255) * pwm2/abs(pwm2)
+    # ANSI escape sequences (All VT100 except ESC[0G)
+    sys.stdout.write('\x1b[2K')                         # Clear current line
+    sys.stdout.write('\x1b[1A\x1b[2K'*(text_len/cols))  # Move cursor up and clear line
+    sys.stdout.write('\x1b[0G')                         # Move to start of line
 
-        if pwm1 >= 0:
-            rc.ForwardM1(address,pwm1)
-        else:
-            rc.BackwardM1(address,-pwm1)
 
-        if pwm1 >= 0:
-            rc.ForwardM2(address,pwm2)
-        else:
-            rc.BackwardM2(address,-pwm2)
+def concurrent_print(text, prompt):
+    blank_current_readline()
+    print(text)
+    sys.stdout.write(prompt + readline.get_line_buffer())
+    sys.stdout.flush()          # Needed or text doesn't show until a key is pressed
 
-        count += 1
-        index = count % timing
 
-        if index > numberOfTargets:
-            index = numberOfTargets
-        else:
-            killMotors()
-
-    return [0]*5 # data output here
 

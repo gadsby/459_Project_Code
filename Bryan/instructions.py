@@ -2,9 +2,7 @@ import numpy as np
 import scipy
 
 #tunable
-fallTime = .4
-resolution = 1/50
-numberOfTargets = fallTime/resolution
+numberOfTargets = 10000
 
 torqueList = #read torques from csv(?) file into size:<num_targs,2> array
 

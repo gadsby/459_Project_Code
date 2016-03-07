@@ -167,11 +167,6 @@ def _readslong():
 		return (val[0],val[1])
 	return (0,0)
 
-#############################
-def writeThatShit(val):
-	_writebyte(val)
-#############################
-
 def _writebyte(val):
 	crc_update(val&0xFF)
 	port.write(chr(val&0xFF))

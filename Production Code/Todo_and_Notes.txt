@@ -1,0 +1,12 @@
+TODO (offline)
+write jupyter notebook to take only csv name and generate all remaining information
+	calculate angles from pulse numbers, generate x-y coords, make plots for torques, animations for positions
+modify matlab code to save csv with appropriate names and attributes in data folder
+
+TODO (need motor, rig, group feedback)
+write control scheme
+cythonize control loop
+figure out gpio reading
+Define, implement, and tune falling condition
+Finish implementing inProgress functions in operationFuncs_inProgress
+	Write pulse to angle translator

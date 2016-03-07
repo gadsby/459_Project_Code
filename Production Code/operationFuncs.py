@@ -1,8 +1,10 @@
+import config
+import torqueList
+
+import roboclaw as rc
+
 import threading
 import time
-
-import readline,thread
-import sys,struct,fcntl,termios
 
 
 
@@ -11,6 +13,8 @@ class fallConditionCheck (threading.Thread):
 		threading.Thread.__init__(self)
 		self.killEvent = killEvent
 		self.successEvent = successEvent
+		self.angVel_thresh = 0
+		self.timeInterval = 0.01
 
 	# NOT FINAL CODE; only used as test
 	def run(self):
@@ -22,41 +26,73 @@ class fallConditionCheck (threading.Thread):
 			x += 1 # read angle 2
 			y += 1 # read angle 3
 			print(w,x,y)
-			time.sleep(0.3)
-			if y==x==w==3:
+			time.sleep(0.2)
+			if y==x==w==2:
 				self.successEvent.set()
 				return
 
-
 # TODO: modify run() to determine fall condition
+# Fall condition: read potentiometer, check if angular velocity above threshold, then run
 #	def run(self):
 #		while not self.killEvent.is_set():
-#			w = 0 # read angle 1
-#			x = 0 # read angle 2
-#			y = 0 # read angle 3
-#			concurrent_print(w,x,y)
-#			time.sleep(0.01)
-#			if y > x > w:
+#			angle1 = 0 # read potentiometer
+#			time.sleep(self.timeInterval)
+#			angle2 = 0 # read potentiometer
+#			angVel = (angle2-angle1)/self.timeInterval
+#			print(angVel)
+#			if angVel > self.angVel_thresh:
 #				self.successEvent.set()
 #				return
 
 
 
+# IN PROGRESS
+def readAngles():
+	kneeAngle = 14 #rc.ReadEncM1()
+	hipAngle = 14 #rc.ReadEncM2()
+	heelAngle = 14 # read GPIO
+	return hipAngle, kneeAngle, heelAngle
 
 
-def blank_current_readline():
-	# Next line said to be reasonably portable for various Unixes
-	(rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
-	text_len = len(readline.get_line_buffer())+2
+# COMPLETE
+def calibrate():
+	config.calibratedValues = readAngles()
+	config.calibrated = True
+	print('\tReference Positions: {}\n'.format(config.calibratedValues))
+	return
 
-	# ANSI escape sequences (All VT100 except ESC[0G)
-	sys.stdout.write('\x1b[2K')                         # Clear current line
-	sys.stdout.write('\x1b[1A\x1b[2K'*(text_len/cols))  # Move cursor up and clear line
-	sys.stdout.write('\x1b[0G')                         # Move to start of line
+# COMPLETE
+def genTorqueList():
+	config.torqueManager = torqueList.torqueListManager(config.torqueListPath)
+	config.torqueListGenerated = True
+	return
 
 
-def concurrent_print(text, prompt):
-	blank_current_readline()
-	print(text)
-	sys.stdout.write(prompt + readline.get_line_buffer())
-	sys.stdout.flush()          # Needed or text doesn't show until a key is pressed
+# COMPLETE
+def menuAndCalling(menuOptions):
+
+	numOptions = len(menuOptions)
+
+	# Print option menu
+	print('\nOptions:')
+	for i in range(numOptions):
+	    print('{}. {}'.format(i+1, menuOptions[i+1][0]))
+	choice = raw_input('Choice: ')
+	print('')
+
+	try:
+		choice = int(choice)
+		assert choice in range(1,numOptions+1)
+	except:
+		print('Invalid choice. Choose again.')
+		return
+
+	menuOptions[choice][1]()
+
+	print('*'*100)
+
+	return
+
+#def killMotors():
+#    rc.ForwardM1(config.address,0)
+#    rc.ForwardM2(config.address,0)

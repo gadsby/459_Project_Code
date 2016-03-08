@@ -5,6 +5,7 @@ import roboclaw as rc
 
 import threading
 import time
+import os
 
 
 
@@ -89,7 +90,8 @@ def menuAndCalling(menuOptions):
 
 	menuOptions[choice][1]()
 
-	print('*'*100)
+	rows, columns = os.popen('stty size', 'r').read().split()
+	print('*'*int(columns))
 
 	return
 

@@ -2,6 +2,8 @@ TODO (offline)
 write jupyter notebook to take only csv name and generate all remaining information
 	calculate angles from pulse numbers, generate x-y coords, make plots for torques, animations for positions
 modify matlab code to save csv with appropriate names and attributes in data folder
+remove threading? it isn't necessary in its current state
+feedback when moving rig into proper position --> that needs threading
 
 TODO (need motor, rig, group feedback)
 write control scheme

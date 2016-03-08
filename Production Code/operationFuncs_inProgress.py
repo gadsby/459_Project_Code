@@ -24,6 +24,8 @@ for port in config.comPorts:
 
 
 def set_motors():
+    # implement way to get feedback on position for this
+    # write ascii animation to move joints into position
     position_Knee, position_Hip = mapAngleToPulse(config.initialAngle_Knee, config.initialAngle_Hip)
     time.sleep(1)
     rc.SpeedAccelDeccelPositionM1(config.address, accel, speed, decel, position_Knee, 0)
@@ -38,6 +40,7 @@ def mapAngleToPulse(initialAngle_Knee, initialAngle_Hip):
     position_Knee = config.calibratedValues[0]-initialAngle_Knee * config.pulsePerRotation
     position_Hip = config.calibratedValues[1]-initialAngle_Hip * config.pulsePerRotation
     return position_Knee, position_Hip
+
 
 
 

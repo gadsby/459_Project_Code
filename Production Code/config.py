@@ -35,7 +35,7 @@ initialAngle_Hip = 0
 
 
 # PROGRAM MODIFIABLE; THESE ARE DEFAULTS
-calibratedValues = []
+calibratedValues = [] # knee, hip, heel
 calibrated = False
 torqueManager = []
 torqueListGenerated = False

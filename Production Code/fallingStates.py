@@ -77,7 +77,7 @@ class fallingSM:
 
 
 		#operationFuncs.set_motors()
-		print('\nSTARTING: Apparatus is powered and being pushed into position for fall.')
+		print('\nSTARTING!')
 		while True:
 			var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
 			if var in ['N', 'P', 'M']:
@@ -124,7 +124,7 @@ class fallingSM:
 
 		"""
 
-		print('\nPRIMED: Apparatus is primed and awaiting fall conditions to be met.')
+		print('\nPRIMED!')
 
 		killCondition = threading.Event()
 		successCondition = threading.Event()
@@ -154,7 +154,7 @@ class fallingSM:
 
 		"""
 
-		print('\nFALLING: Here I go falling!')
+		print('\nFALLING!\n')
 
 		lastError_Knee, lastError_Hip, pwm_Knee, pwm_Hip, dataIndex = [0]*5
 
@@ -167,8 +167,8 @@ class fallingSM:
 
 			# READ DATA FROM SENSORS (IN PROGRESS)
 			kneeAngle, hipAngle, heelAngle = operationFuncs.readAngles()
-			hipTorque = 0 # ?
-			kneeTorque = 0 # ?
+			hipTorque = 0 # how to read torque
+			kneeTorque = 0 # how to read torque
 
 
 			# ASSIGN DATA TO DATA ARRAY
@@ -217,19 +217,24 @@ class fallingSM:
 
 		"""
 
+		print('\nSAVING!')
+
 		ioStructure = dataSaving.ioOperations(config.dataFolder)
 		sessionDirectory = ioStructure.getSaveName()
 
 		fileName, fullPath = ioStructure.getSaveName()
 
-		metadata = '\n'.join(['{}\t{}'.format(name, eval('config.'+name)) for name in fallingSM.metadataNames])
 
-		np.savetxt(fullPath, self.fallingData, delimiter=',', header=metadata, comments='')
+		metadataList = ['{}\t{}'.format(name, eval('config.'+name)) for name in fallingSM.metadataNames]
+		metadataForFile = '\n'.join(metadataList)
+		metadataForPrinting = '\t' + '\n\t'.join(metadataList)
+		print(metadataForPrinting)
 
-		print('\nSAVING: And here I go saving some data (not actually saving real data).')
-		print('Data Saved!\n')
+		np.savetxt(fullPath, self.fallingData, delimiter=',', header=metadataForFile, comments='')
+
+		print('\nData Saved!')
 		print('\tSize {}'.format(self.fallingData.shape))
-		print('\t{} lines of metadata'.format(len(metadataNames)))
+		print('\t{} lines of metadata'.format(len(fallingSM.metadataNames)))
 		print('\tPath name: {}\n'.format(fileName))
 
 		return

@@ -9,13 +9,12 @@ torqueListPath = '/Users/olivergadsby/Desktop/MATLAB_code.csv' # only one, need 
 address = 0x80
 baudRate = 115200
 gpioPin = 18
-pulsePerRotation = 1 # have to find
+pulsePerRotation = 768
 
 # TUNEABLE
-kp = 1
-kd = 0
-ki = 0
-
+kp = {'knee' : 1, 'hip' : 1}
+kd = {'knee' : 0, 'hip' : 0}
+ki = {'knee' : 0, 'hip' : 0}
 
 
 # PHYSICAL LENGTHS

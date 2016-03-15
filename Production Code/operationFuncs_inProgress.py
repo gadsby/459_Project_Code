@@ -7,14 +7,6 @@ import config
 GPIO.setup(config.gpioPin, GPIO.IN)
 
 
-for port in config.comPorts:
-    try:
-        rc.Open(port, config.baudRate)
-    except:
-        continue
-
-# do something if none of the ports work
-
 
 
 # undeclared variables:
@@ -23,9 +15,10 @@ for port in config.comPorts:
 #decel
 
 
+
 def set_motors():
     # implement way to get feedback on position for this
-    # write ascii animation to move joints into position
+    # write ascii animation to help move joints into position
     position_Knee, position_Hip = mapAngleToPulse(config.initialAngle_Knee, config.initialAngle_Hip)
     time.sleep(1)
     rc.SpeedAccelDeccelPositionM1(config.address, accel, speed, decel, position_Knee, 0)
@@ -35,11 +28,22 @@ def set_motors():
     print('Hip Angle set to {}'.format(config.initialAngle_Hip))
 
 
-
-def mapAngleToPulse(initialAngle_Knee, initialAngle_Hip):
-    position_Knee = config.calibratedValues[0]-initialAngle_Knee * config.pulsePerRotation
-    position_Hip = config.calibratedValues[1]-initialAngle_Hip * config.pulsePerRotation
+# NEEDS WORK
+def getPulseFromAngle(angleKnee, angleHip):
+    position_Knee = config.calibratedValues[0]-angleKnee * config.pulsePerRotation/np.pi
+    position_Hip = config.calibratedValues[1]-angleHip * config.pulsePerRotation/np.pi
     return position_Knee, position_Hip
+
+
+# MAYBE GOOD?
+def getAngleFromPulse(pulseKnee, pulseHip):
+    angleKnee = ((pulseKnee - config.calibratedValues[0]) % config.pulsePerRotation) * np.pi/config.pulsePerRotation
+    angleHip = ((pulseHip - config.calibratedValues[1]) % config.pulsePerRotation) * np.pi/config.pulsePerRotation
+    return angleKnee, angleHip
+
+
+# 768(=12*64) pulses per rotation
+# operate on ring mod 768
 
 
 

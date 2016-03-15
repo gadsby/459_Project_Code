@@ -8,6 +8,19 @@ import time
 import os
 
 
+#motorDetected = False
+#for comPort in config.comPorts:
+#    try:
+#        motorDetected = rc.Open(port, config.baudRate)
+#    except:
+#        continue
+#if(not motorDetected):
+#    print('Motor port could not be opened.')
+#    print('Ports checked:')
+#    for i in config.comPorts:
+#    	print('\t'+i)
+#    exit()
+
 
 class fallConditionCheck (threading.Thread):
 	def __init__(self, killEvent, successEvent):

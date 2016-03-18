@@ -1,12 +1,18 @@
+
+# LOCAL LIBRARIES
 import config
 import torqueList
 
-import roboclaw as rc
-
+# PYTHON LIBRARIES
 import threading
 import time
 import os
 
+# ELECTRICAL LIBRARIES
+#import roboclaw as rc
+
+
+######################### Setup Electrical Interfacing #########################
 
 #motorDetected = False
 #for comPort in config.comPorts:
@@ -19,9 +25,56 @@ import os
 #    print('Ports checked:')
 #    for i in config.comPorts:
 #    	print('\t'+i)
+# 	 print('Exiting...')
 #    exit()
 
 
+# INITIALIZE GPIO PORT
+
+
+
+
+
+######################### Electrical Interfacing Functions #########################
+
+# IN PROGRESS
+def readPot():
+    potVal = 0 # something goes here
+    return potVal
+
+# IN PROGRESS; ALMOST COMPLETE
+def readAngles():
+	kneeAngle = 14 #rc.ReadEncM1()
+	hipAngle = 14 #rc.ReadEncM2()
+	heelAngle = readPot()
+	return hipAngle, kneeAngle, heelAngle
+
+# COMPLETE
+def calibrate():
+	config.calibratedValues = readAngles()
+	config.calibrated = True
+	print('\tReference Positions: {}\n'.format(config.calibratedValues))
+	return
+
+
+# COMPLETE
+#def setMotors(pwm_Knee, pwm_Hip):
+#	rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM1(config.address, -pwm_Knee)
+#	rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM2(config.address, -pwm_Hip)
+#	return
+
+# COMPLETE
+#def killMotors():
+#	setMotors(0, 0)
+#	return
+
+
+
+
+
+######################### Threading Classes #########################
+
+# COMPLETE
 class fallConditionCheck (threading.Thread):
 	def __init__(self, killEvent, successEvent):
 		threading.Thread.__init__(self)
@@ -49,9 +102,9 @@ class fallConditionCheck (threading.Thread):
 # Fall condition: read potentiometer, check if angular velocity above threshold, then run
 #	def run(self):
 #		while not self.killEvent.is_set():
-#			angle1 = 0 # read potentiometer
+#			angle1 = readPot() # read potentiometer
 #			time.sleep(self.timeInterval)
-#			angle2 = 0 # read potentiometer
+#			angle2 = readPot() # read potentiometer
 #			angVel = (angle2-angle1)/self.timeInterval
 #			print(angVel)
 #			if angVel > self.angVel_thresh:
@@ -60,20 +113,9 @@ class fallConditionCheck (threading.Thread):
 
 
 
-# IN PROGRESS
-def readAngles():
-	kneeAngle = 14 #rc.ReadEncM1()
-	hipAngle = 14 #rc.ReadEncM2()
-	heelAngle = 14 # read GPIO
-	return hipAngle, kneeAngle, heelAngle
 
 
-# COMPLETE
-def calibrate():
-	config.calibratedValues = readAngles()
-	config.calibrated = True
-	print('\tReference Positions: {}\n'.format(config.calibratedValues))
-	return
+######################### Purely Software Functions #########################
 
 # COMPLETE
 def genTorqueList():
@@ -108,6 +150,4 @@ def menuAndCalling(menuOptions):
 
 	return
 
-#def killMotors():
-#    rc.ForwardM1(config.address,0)
-#    rc.ForwardM2(config.address,0)
+

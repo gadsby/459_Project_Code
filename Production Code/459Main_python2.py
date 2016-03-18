@@ -1,7 +1,9 @@
+
+# LOCAL LIBRARIES
 import config
+import operationFuncs
 import fallingStates
 import torqueList
-import operationFuncs
 
 
 if __name__ == "__main__":

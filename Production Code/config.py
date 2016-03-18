@@ -1,7 +1,15 @@
+
 # USER SPECIFIC - OLIVER
 comPorts = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421']
 dataFolder = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Results'
 torqueListPath = '/Users/olivergadsby/Desktop/MATLAB_code.csv' # only one, need to modify file structure to accomodate more
+
+## USER SPECIFIC - RASPBERRY PI
+#comPorts = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421']
+#dataFolder = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Results'
+#torqueListPath = '/Users/olivergadsby/Desktop/MATLAB_code.csv' # only one, need to modify file structure to accomodate more
+#need to copy over torque list
+
 
 
 
@@ -34,7 +42,7 @@ initialAngle_Hip = 0
 
 
 # PROGRAM MODIFIABLE; THESE ARE DEFAULTS
-calibratedValues = [] # knee, hip, heel
+calibratedValues = [] # knee, hip, heel, saves as encoder value
 calibrated = False
 torqueManager = []
 torqueListGenerated = False

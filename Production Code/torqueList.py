@@ -1,7 +1,10 @@
+
+# LOCAL LIBRARIES
+import config
+
+# PYTHON LIBRARIES
 import numpy as np
 from scipy import interpolate
-
-import config
 
 
 class torqueListManager:

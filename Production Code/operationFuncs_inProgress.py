@@ -28,14 +28,14 @@ def set_motors():
     print('Hip Angle set to {}'.format(config.initialAngle_Hip))
 
 
-# NEEDS WORK
+# NEEDS WORK; non-bijective system makes this trickier, probably need weighting to go to only valid position and not try to do something else
 def getPulseFromAngle(angleKnee, angleHip):
-    position_Knee = config.calibratedValues[0]-angleKnee * config.pulsePerRotation/np.pi
-    position_Hip = config.calibratedValues[1]-angleHip * config.pulsePerRotation/np.pi
+    position_Knee = 0#config.calibratedValues[0]-angleKnee * config.pulsePerRotation/np.pi
+    position_Hip = 0#config.calibratedValues[1]-angleHip * config.pulsePerRotation/np.pi
     return position_Knee, position_Hip
 
 
-# MAYBE GOOD?
+# MAYBE GOOD; save data on branch cut, can make continuous later?
 def getAngleFromPulse(pulseKnee, pulseHip):
     angleKnee = ((pulseKnee - config.calibratedValues[0]) % config.pulsePerRotation) * np.pi/config.pulsePerRotation
     angleHip = ((pulseHip - config.calibratedValues[1]) % config.pulsePerRotation) * np.pi/config.pulsePerRotation

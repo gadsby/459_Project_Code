@@ -1,14 +1,10 @@
-# TODO:
-# 1) Fill in functions with actual control and data collection --> uncomment stuff, add control loop
-# 2) Update documentation
 
-
+# LOCAL LIBRARIES
 import operationFuncs
 import dataSaving
 import config
 
-#import roboclaw as rc
-
+# PYTHON LIBRARIES
 import time
 import threading
 import numpy as np
@@ -28,7 +24,7 @@ class fallingSM:
 		self.initiateFallMode()
 
 
-	# STATE MACHINE IMPLEMENTATION
+	# STATE MACHINE IMPLEMENTATION (COMPLETE)
 	def initiateFallMode(self):
 
 		"""
@@ -60,7 +56,7 @@ class fallingSM:
 			return
 
 
-	# STATE 1
+	# STATE 1 (COMPLETE)
 	def push_into_position_func(self):
 
 		"""
@@ -86,7 +82,7 @@ class fallingSM:
 				print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
 
 
-	# WAIT STATE
+	# WAIT STATE (COMPLETE)
 	def neutral_state(self):
 
 		"""
@@ -110,7 +106,7 @@ class fallingSM:
 				print('Invalid. Choose \'M\', or \'R\'.\n')
 
 
-	# STATE 2
+	# STATE 2 (COMPLETE)
 	def primed_state(self):
 
 		"""
@@ -126,6 +122,7 @@ class fallingSM:
 
 		print('\nPRIMED!')
 
+		# threading isn't really at all important here; should probably change this
 		killCondition = threading.Event()
 		successCondition = threading.Event()
 
@@ -270,11 +267,10 @@ class fallingSM:
 			pwm_Hip = np.sign(pwm_Hip)*255 if abs(pwm_Hip) > 255 else pwm_Hip
 
 			# CONTROL JOINTS
-			#rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM1(config.address, -pwm_Knee)
-			#rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM2(config.address, -pwm_Hip)
+			#operationFuncs.setMotors(pwm_Knee=pwm_Knee, pwm_Hip=pwm_Hip)
 
+			# UPDATE TIME CONDITIONS
 			timeNow = time.clock() - timeStart
-
 			if timeNow > config.torqueManager.timeLimit:
 				break
 
@@ -285,7 +281,7 @@ class fallingSM:
 
 
 
-	# STATE 4
+	# STATE 4 (COMPLETE)
 	def save_data(self):
 
 		"""

@@ -12,3 +12,14 @@ figure out gpio reading
 Define, implement, and tune falling condition
 Finish implementing inProgress functions in operationFuncs_inProgress
 	Write pulse to angle translator
+
+
+
+pi@128.189.211.174
+
+
+Todd: ordering belts and motor
+Sam: wiring, incorporate damping, work on pi
+Oliver: Generate Js and Ts and controllers (with someone), inertias in code
+
+S+O: Define falling condition

@@ -1,4 +1,4 @@
-function optimal_result_impact = optim_result_motion(Y)
+function optimal_result_impact = optim_result_motion(Y, filename)
 global L0 L1 L2 L3 L4 var_array_length
 
 X(:,1) = Y(1:var_array_length);
@@ -20,7 +20,7 @@ for i = 1:var_array_length % Examining the impact time and feasibility of the mo
 end
 
 figure
-writerObj = VideoWriter('fall.avi');
+writerObj = VideoWriter(filename);
 open(writerObj);
 set(gca,'nextplot','replacechildren');
 set(gcf,'Renderer','zbuffer');

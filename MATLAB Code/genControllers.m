@@ -9,9 +9,10 @@
 %   opt_out_filename stucture: 
 %   
 %   C1: t     - time
-%   C2: Te_2  - torque applied at 2nd joint
-%   C3: Te_3  - torque applied at 3rd joint 
-%   C4: a11   - moment of inertia in terms of state vars at time t
+%   C2: Te_2  - torque applied at 2nd joint (at output shaft)
+%   C3: Te_3  - torque applied at 3rd joint (at output shaft)
+%   C4: a11   - moment of inertia in terms of state vars at time t (at
+%   output shaft)
 %   C5: a12
 %   C6: a13
 %   C7: a21
@@ -20,18 +21,18 @@
 %   C10: a31
 %   C11: a32
 %   C12: a33
-%   C13: c11  - net torques at each joint
+%   C13: c11  - net torques at each joint (at output shaft)
 %   C14: c21
 %   C15: c31
 %
 %   pi_in_filename structure:
 %
 %   C1: t               - time
-%   C2: Te_2            - torque applied at 2nd joint
-%   C3: Te_3            - torque applied at 3rd joint
-%   C4: Te_2_responce   - responce of Te_2 due to load torques
-%   C5: Te_3_responce   - responce of Te_3 due to load torques
-%   C6: c1              -control matrix
+%   C2: Te_2            - torque applied at 2nd joint (at armature)
+%   C3: Te_3            - torque applied at 3rd joint (at armature)
+%   C4: Te_2_responce   - responce of Te_2 due to load torques (at armature)
+%   C5: Te_3_responce   - responce of Te_3 due to load torques (at armature)
+%   C6: c1              - control matrix
 %   C7: c2
 %   C8: c3
 %   C9: c4
@@ -43,6 +44,8 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 function genControllers(opt_out_filename,pi_in_filename)
+
+global alpha beta J_rotor N
 %motor params
 
 syms s;
@@ -50,9 +53,17 @@ syms s;
 kt = 13.4*10^-3; %torque constant
 kv = 1.4*10^-3*2*pi/60; %speed constant
 R = 1.9; %armature resistance
+N = 64; %speed reduction factor
+J_rotor = 5.7e-7; %rotor inertia
+alpha = 1/2; %length scaling factor
+beta = 1/32; %mass scaling factor
 
 %import variables from csv
 M = csvread(opt_out_filename);
+
+%scale results to alpha and beta scaling if optimization was at full scale 
+%convert to rotor side of geartrain. Also Inverts A.
+M = scaledata(M,1,1,0);
 
 t = M(:,1);
 dt_source = t(2)-t(1);
@@ -72,7 +83,6 @@ a33 = M(:,12);
 Tnet_1 = M(:,13);
 Tnet_2 = M(:,14);
 Tnet_3 = M(:,15);
-
 %interpolate optimization data
 fs = 1000; %sampling frequency (Hz)
 dt = 1/fs;
@@ -97,9 +107,9 @@ states = {'T21' 'T22' 'T23' 'T31' 'T32' 'T33'};
 inputs = {'v1' 'v2' 'Tm1' 'Tm2' 'Tm3'};
 outputs = {'Te2', 'Te3'};
 L1 = length(a11);
-T_2x5 = zeros(2,5,L1);
-T_2x2 = zeros(2,2,L1);
-T_2x3 = zeros(2,3,L1);
+T_2x5 = cell(L1,1);
+T_2x2 = cell(L1,1);
+T_2x3 = cell(L1,1);
 C_2x2 = zeros(2,2,L1);
 for k = 1:L1
     A = [ 0 0 0 0 0 0 ; -a22(k)*kt*kv/R -a22(k)*kt*kv/R -a22(k)*kt*kv/R 0 0 0 ...
@@ -109,39 +119,33 @@ for k = 1:L1
 
     B = [0 0 -a21(k) 0 0; a22(k)*kt/R 0 0 -a22(k) 0 ; 0 a23(k)*kt/R 0 0 -a23(k) ...
         ; 0 0 -a31(k) 0 0 ; a32(k)*kt/R 0 0 -a32(k) 0 ; 0 a33(k)*kt/R 0 0 -a33(k)];
-
-    
-    ghgh1 = s*eye(6,6)
-    ghgh2 = ghgh1-A
-    ghgh3 = ghgh2\B
-    ghgh4 = C*ghgh3
-    ghgh5 = ghgh4+D
     
     %transfer functions
     sys_mimo = ss(A,B,C,D,'statename',states,...
         'inputname',inputs,...
         'outputname',outputs);
-    TF = tf(sys_mimo);
+    TF = tf(sys_mimo); %convert to tf object
     
-    T_2x5(:,:,k) = C*((s*eye(6,6)-A)\B)+D;
-    T_2x2(:,:,k) = T_2x5(:,1:2,k);
-    T_2x3(:,:,k) = T_2x5(:,3:5,k);
+    [num,den] = tfdata(TF);
+    %subplot(2,5,1)
+    for i = 1:2
+       for j = 1:5
+          %subplot(2,5,(i-1)*5+(j));
+          n = num{i,j};
+          d = den{i,j};
+          tf_simple(i,j) = tf(n(1:3),d(1:3));
+          %bodeplot(TF(i,j),tf_simple(i,j),'r--');
+       end
+    end
+    T_2x5{k} = tf_simple;
+    T_2x2{k} = tf_simple(:,1:2);
+    T_2x3{k} = tf_simple(:,3:5);
 
     %generate controller
     %C_2x2(:,:,k) = tf_to_C(T_2x2);
 
     %convert symbolic TF to tf object
-    for i = 1:2
-        for j = 1:3
-            T_2x3(i,j,k)
-            [symNum,symDen] = numden(sym(T_2x3(i,j,k))); %get num and den of Symbolic TF
-            TFnum = sym2poly(symNum);    %convert Symbolic num to polynomial
-            TFden = sym2poly(symDen);    %convert Symbolic den to polynomial
-            T_2x3_tf(i,j,k) = tf(TFnum,TFden); %create new tf object
-        end
-    end
 end
-
 
 
 %calculate system responce from mechanical load torques
@@ -152,31 +156,55 @@ Te_2_responce = zeros(size(Te_2));
 Te_3_responce = Te_2_responce;
 Te_2_adj = Te_2_responce;
 Te_3_adj = Te_2_responce;
+v_2_expected = Te_2_responce;
+v_3_expected = Te_2_responce;
 
 h = waitbar(0,'Generating system responce...');
 
-for k = 1:L2
+for k = N+1:L2-(N+1)
     waitbar(k / L2)
     
     %T_2x3_tfd = c2d(T_2x3_tf,0.01);
     
-    u = [Tm_1(k-N:k+N) Tm_2(k-N:k+N) Tm_3(k-N:k+N)];
-    y = lsim(T_2x3_tf(:,:,floor(k*L1/L2)),u,t); %use transfer function closest to this time
+    u = [Tm_1(k-N:k+N)' Tm_2(k-N:k+N)' Tm_3(k-N:k+N)'];
+    y = lsim(T_2x3{floor(k*L1/L2)+1},u,t); %use transfer function closest to this time
     Te_2_responce(k) = y(N+1,1);
     Te_3_responce(k) = y(N+1,2);
     Te_2_adj(k) = Te_2(k)-Te_2_responce(k);
     Te_3_adj(k) = Te_3(k)-Te_3_responce(k);
 end
+
 close(h) 
+h = waitbar(0,'Generating inverse system responce...');
+
+for k = N+1:L2-(N+1)
+    waitbar(k / L2)
+    u = [Te_2_adj(k-N:k+N)' Te_3_adj(k-N:k+N)'];
+    y = lsim(inv(T_2x2{floor(k*L1/L2)+1}),u,t);
+    v_2_expected(k) = y(N+1,1);
+    v_3_expected(k) = y(N+1,2);
+end
+close(h) 
+Te_2_repsonce2 = lsim(T_2x3{25},[Tm_1' Tm_2' Tm_3'],t_fine);
+v_2_expected2 = lsim(inv(T_2x2{25}),[Te_2_adj' Te_3_adj'],t_fine);
+% Te_2_responce([1:N (L2-N):N]) = Te_2_responce(N+1);
+% Te_3_responce([1:N (L2-N):N]) = Te_3_responce(N+1);
+% Te_2_adj(1:N) = Te_2()-Te_2_responce(k);
+% Te_3_adj(1:N) = Te_3()-Te_3_responce(k);
+
 
 %write data to csv
-C_2x2_p = permute(C_2x2,[3 2 1]);
-c1 = C_2x2_p(:,1,1);
-c2 = C_2x2_p(:,2,1);
-c3 = C_2x2_p(:,1,2);
-c4 = C_2x2_p(:,2,2);
+% C_2x2_p = permute(C_2x2,[3 2 1]);
+% c1 = C_2x2_p(:,1,1);
+% c2 = C_2x2_p(:,2,1);
+% c3 = C_2x2_p(:,1,2);
+% c4 = C_2x2_p(:,2,2);
 
-M2 = [t Te_2 Te_3 Te_2_responce Te_3_responce c1 c2 c3 c4]
+c1 = zeros(size(t_fine));
+c2 = c1; 
+c3 = c1;
+c4 = c1;
+M2 = [t_fine' Te_2' Te_3' Te_2_responce' Te_3_responce' c1' c2' c3' c4'];
 csvwrite(pi_in_filename,M2);
 
 end

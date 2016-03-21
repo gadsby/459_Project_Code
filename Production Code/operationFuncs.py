@@ -7,6 +7,7 @@ import torqueList
 import threading
 import time
 import os
+import numpy as np
 
 # ELECTRICAL LIBRARIES
 #import roboclaw as rc
@@ -47,7 +48,21 @@ def readAngles():
 	kneeAngle = 14 #rc.ReadEncM1()
 	hipAngle = 14 #rc.ReadEncM2()
 	heelAngle = readPot()
-	return hipAngle, kneeAngle, heelAngle
+	return kneeAngle, hipAngle, heelAngle
+
+# IN PROGRESS
+def readCurrents():
+	kneeCurrent, hipCurrent = [0.01]*2
+	return np.array([kneeCurrent, hipCurrent])
+
+#	currents = rc.ReadCurrents()
+#	if currents[0]:
+#		kneeCurrent, hipCurrent = currents[1:] #make sure order is correct
+#		return np.array([kneeCurrent, hipCurrent])
+#	else:
+#		return # error if read fails
+
+
 
 # COMPLETE
 def calibrate():
@@ -67,6 +82,7 @@ def calibrate():
 #def killMotors():
 #	setMotors(0, 0)
 #	return
+
 
 
 
@@ -149,5 +165,9 @@ def menuAndCalling(menuOptions):
 	print('*'*int(columns))
 
 	return
+
+
+
+
 
 

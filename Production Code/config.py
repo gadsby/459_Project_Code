@@ -2,13 +2,15 @@
 # USER SPECIFIC - OLIVER
 comPorts = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421']
 dataFolder = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Results'
-torqueListPath = '/Users/olivergadsby/Desktop/MATLAB_code.csv' # only one, need to modify file structure to accomodate more
+#torqueListPath = '/Users/olivergadsby/Desktop/MATLAB_code.csv' # only one, need to modify file structure to accomodate more
+torqueListPath = '/Users/olivergadsby/Desktop/outputControllers.csv'
 
 ## USER SPECIFIC - RASPBERRY PI
 #comPorts = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421']
-#dataFolder = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Results'
-#torqueListPath = '/Users/olivergadsby/Desktop/MATLAB_code.csv' # only one, need to modify file structure to accomodate more
+#dataFolder = '/home/pi/GitStuff/459_Project_Code/Results'
+#torqueListPath = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Production Code/dummy_outputControllers.csv' # only one, need to modify file structure to accomodate more
 #need to copy over torque list
+
 
 
 
@@ -23,6 +25,45 @@ pulsePerRotation = 768
 kp = {'knee' : 1, 'hip' : 1}
 kd = {'knee' : 0, 'hip' : 0}
 ki = {'knee' : 0, 'hip' : 0}
+
+# MOTOR CONSTANTS
+torque_motorConstant = 13.4e-3 #torque constant
+angVel_motorConstant = 1.4660765716752367e-4 #1.4e-3*2*np.pi/60, speed constant
+armRes_motorConstant = 1.9 #armature resistance
+
+
+# METADATA TO INCLUDE
+metadataNames = ['torqueListPath', 'shankLength', 'thighLength',
+	'trunkLength', 'shankMass', 'thighMass', 'trunkMass', 'initialAngle_Knee',
+	'initialAngle_Hip', 'calibratedValues']	
+
+
+## STUFF AND THINGS
+L = 1.60  # Total height of the human subject
+M = 53.7  # Total mass of the human subject
+L0 = 0.039*L # foot height
+L1 = (0.285-0.039)*L # Shank length
+L2 = (0.53-0.285)*L # Thigh length
+L3 = (0.818-0.53)*L # Trunk length
+L4 = (1-0.818)*L # Head and neck length
+rCOM_1 = 0.394 # Distal distance of center of mass of the foot and shank segment given as a percent of shank length
+rCOM_2 = 0.567 # Distal distance of center of mass of the thigh segment given as a percent of thigh length
+rCOM_3 = 0.626 # Proximal distance of center of mass of the HAT (Head, Arms, Trunk) segment given as a percent of trunk length
+rG_1 = 0.572 # Distal radius of gyration of the foot and shank segment given as a percent of shank length
+rG_2 = 0.653 # Distal radius of gyration of the thigh segment given as a percent of thigh length
+rG_3 = 0.798 # Proximal radius of gyration of HAT segment given as percent of trunk length
+M1 = 0.061*M # Foot and shank mass
+M2 = 0.1*M # Thigh mass
+M3 = 0.5*(0.678*M) # Half the mass of the HAT segment
+g = 9.8 # gravitational acceleration
+
+#teta_01 = pi/2+5*pi/180; # Ankle angle - Initial condition
+#teta_02 = 40*pi/180; # Knee angle - Initial condition
+#teta_03 = -40*pi/180; # Hip angle - Initial condition
+#dteta_01 = 0 ; # Ankle angular velocity - Initial condition
+#dteta_02 = 0; # Knee angular velocity - Initial condition
+#dteta_03 = 0; # Hip angular velocity - Initial condition
+
 
 
 # PHYSICAL LENGTHS

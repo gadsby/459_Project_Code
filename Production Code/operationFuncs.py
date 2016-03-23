@@ -11,6 +11,8 @@ import numpy as np
 
 # ELECTRICAL LIBRARIES
 #import roboclaw as rc
+#import RPi.GPIO as GPIO
+
 
 
 ######################### Setup Electrical Interfacing #########################
@@ -30,17 +32,48 @@ import numpy as np
 #    exit()
 
 
-# INITIALIZE GPIO PORT
+## INITIALIZE GPIO PORTS
+#GPIO.setmode(GPIO.BCM)
+#GPIO.setup(SPIMOSI, GPIO.OUT)
+#GPIO.setup(SPIMISO, GPIO.IN)
+#GPIO.setup(SPICLK, GPIO.OUT)
+#GPIO.setup(SPICS, GPIO.OUT)
 
+# put in error detection if ports aren't found
 
 
 
 
 ######################### Electrical Interfacing Functions #########################
 
-# IN PROGRESS
+# COMPLETE
+#def readadc(adcnum=config.potentiometer_adc, clockpin=config.SPICLK, mosipin=config.SPIMOSI,\
+#			misopin=config.SPIMISO, cspin=config.SPICS):
+#    GPIO.output(cspin, True)
+#    GPIO.output(clockpin, False)
+#    GPIO.output(cspin, False)
+#    commandout = (adcnum | 0x18) << 3
+#    for i in range(5):
+#        if (commandout & 0x80):
+#            GPIO.output(mosipin, True)
+#        else:
+#            GPIO.output(mosipin, False)
+#        commandout <<= 1
+#        GPIO.output(clockpin, True)
+#        GPIO.output(clockpin, False)
+#    adcout = 0
+#    for i in range(12):
+#        GPIO.output(clockpin, True)
+#        GPIO.output(clockpin, False)
+#        adcout <<= 1
+#        if (GPIO.input(misopin)):
+#            adcout |= 0x1
+#    GPIO.output(cspin, True)
+#    return adcout >> 1
+
+# COMPLETE
 def readPot():
-    potVal = 0 # something goes here
+    potVal = 0 #readadc()
     return potVal
 
 # IN PROGRESS; ALMOST COMPLETE
@@ -60,7 +93,7 @@ def readCurrents():
 #		kneeCurrent, hipCurrent = currents[1:] #make sure order is correct
 #		return np.array([kneeCurrent, hipCurrent])
 #	else:
-#		return # error if read fails
+#		return -10*np.ones((1,2))
 
 
 
@@ -82,8 +115,6 @@ def calibrate():
 #def killMotors():
 #	setMotors(0, 0)
 #	return
-
-
 
 
 

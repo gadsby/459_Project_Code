@@ -55,7 +55,7 @@ if __name__ == '__main__':
         start = time.clock()
         res = readadc(potentiometer_adc, SPICLK, SPIMOSI, SPIMISO, SPICS)
         stop = time.clock()
-        print(res, stop-start)
+        print('PotOutput: {}\tTimeDelay: {}'.format(res, stop-start))
         time.sleep(0.2)
 
 

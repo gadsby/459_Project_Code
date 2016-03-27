@@ -73,21 +73,21 @@ if add_J_rotor == 1
      a22 = a22+J_rotor;
      a33 = a33+J_rotor;
 end
+% 
+% for i = 1:length(a11)
+%     A = [a11(i) a12(i) a13(i);a21(i) a22(i) a23(i);a31(i) a32(i) a33(i)];
+%     A = inv(A);
+%     a11(i) = A(1,1);
+%     a12(i) = A(1,2);
+%     a13(i) = A(1,3);
+%     a21(i) = A(2,1);
+%     a22(i) = A(2,2);
+%     a23(i) = A(2,3);
+%     a31(i) = A(3,1);
+%     a32(i) = A(3,2);
+%     a33(i) = A(3,3);
+% end
 
-for i = 1:length(a11)
-    A = [a11(i) a12(i) a13(i);a21(i) a22(i) a23(i);a31(i) a32(i) a33(i)];
-    A = inv(A);
-    a11(i) = A(1,1);
-    a12(i) = A(1,2);
-    a13(i) = A(1,3);
-    a21(i) = A(2,1);
-    a22(i) = A(2,2);
-    a23(i) = A(2,3);
-    a31(i) = A(3,1);
-    a32(i) = A(3,2);
-    a33(i) = A(3,3);
-end
-
-M = [t Te_2 Te_3 a11 a12 a13 a21 a22 a23 a31 a32 a33...
+M = [t Te_2 Te_3 1./a11 1./a12 1./a13 1./a21 1./a22 1./a23 1./a31 1./a32 1./a33...
     Tnet_1 Tnet_2 Tnet_3];
 end

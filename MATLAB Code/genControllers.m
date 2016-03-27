@@ -32,7 +32,7 @@
 %   C3: Te_3            - torque applied at 3rd joint (at armature)
 %   C4: Te_2_responce   - responce of Te_2 due to load torques (at armature)
 %   C5: Te_3_responce   - responce of Te_3 due to load torques (at armature)
-%   C6: c1              - control matrix
+%   C6: c1              -control matrix
 %   C7: c2
 %   C8: c3
 %   C9: c4
@@ -63,7 +63,7 @@ M = csvread(opt_out_filename);
 
 %scale results to alpha and beta scaling if optimization was at full scale 
 %convert to rotor side of geartrain. Also Inverts A.
-M = scaledata(M,1,1,0);
+M = scaledata(M,1,1,1);
 
 t = M(:,1);
 dt_source = t(2)-t(1);
@@ -99,9 +99,16 @@ Tm_1 = Tnet_1;
 Tm_2 = Tnet_2 - Te_2;
 Tm_3 = Tnet_3 - Te_3;
 
+%find fft of input signal
+
+wc_2 = findMaxOmega(Te_2,dt,0);
+wc_3 = findMaxOmega(Te_3,dt,0);
+
 %state space rep
-C = [-kv/R -kv/R -kv/R 0 0 0; 0 0 0 -kv/R -kv/R -kv/R];
-D = [1/R 0 0 0 0; 0 1/R 0 0 0];
+K = kt*kv/R;
+
+C = [-K -K -K 0 0 0; 0 0 0 -K -K -K];
+D = [kt/R 0 0 0 0; 0 kt/R 0 0 0];
 
 states = {'T21' 'T22' 'T23' 'T31' 'T32' 'T33'};
 inputs = {'v1' 'v2' 'Tm1' 'Tm2' 'Tm3'};
@@ -111,14 +118,23 @@ T_2x5 = cell(L1,1);
 T_2x2 = cell(L1,1);
 T_2x3 = cell(L1,1);
 C_2x2 = zeros(2,2,L1);
-for k = 1:L1
-    A = [ 0 0 0 0 0 0 ; -a22(k)*kt*kv/R -a22(k)*kt*kv/R -a22(k)*kt*kv/R 0 0 0 ...
-        ; 0 0 0 -a23(k)*kt*kv/R -a23(k)*kt*kv/R -a23(k)*kt*kv/R ; 0 0 0 0 0 0 ...
-        ; -a32(k)*kt*kv/R -a32(k)*kt*kv/R -a32(k)*kt* kv/R 0 0 0 ; ...
-        0 0 0 -a33(k)*kt*kv/R -a33(k)*kt*kv/R -a33(k)*kt*kv/R];
 
-    B = [0 0 -a21(k) 0 0; a22(k)*kt/R 0 0 -a22(k) 0 ; 0 a23(k)*kt/R 0 0 -a23(k) ...
-        ; 0 0 -a31(k) 0 0 ; a32(k)*kt/R 0 0 -a32(k) 0 ; 0 a33(k)*kt/R 0 0 -a33(k)];
+h = waitbar(0,'Generating MIMO controllers...');
+for k = 1:L1
+    
+    waitbar(k / L1)
+%     A = [ 0 0 0 0 0 0 ; -a22(k)*kt*kv/R -a22(k)*kt*kv/R -a22(k)*kt*kv/R 0 0 0 ...
+%         ; 0 0 0 -a23(k)*kt*kv/R -a23(k)*kt*kv/R -a23(k)*kt*kv/R ; 0 0 0 0 0 0 ...
+%         ; -a32(k)*kt*kv/R -a32(k)*kt*kv/R -a32(k)*kt* kv/R 0 0 0 ; ...
+%         0 0 0 -a33(k)*kt*kv/R -a33(k)*kt*kv/R -a33(k)*kt*kv/R];
+% 
+%     B = [0 0 -a21(k) 0 0; a22(k)*kt/R 0 0 -a22(k) 0 ; 0 a23(k)*kt/R 0 0 -a23(k) ...
+%         ; 0 0 -a31(k) 0 0 ; a32(k)*kt/R 0 0 -a32(k) 0 ; 0 a33(k)*kt/R 0 0 -a33(k)];
+    
+    A = [0 0 0 0 0 0;-K*a22(k) -K*a22(k) -K*a22(k) 0 0 0;0 0 0 -K*a23(k) -K*a23(k) -K*a23(k);0 0 0 0 0 0;-K*a32(k) -K*a32(k) -K*a32(k) 0 0 0;0 0 0 -K*a33(k) -K*a33(k) -K*a33(k)];
+    
+    B = [0 0 a21(k) 0 0;kt*a22(k)/R 0 0 a22(k) 0;0 kt*a23(k)/R 0 0 a23(k);0 0 a31(k) 0 0;...
+        kt*a32(k)/R 0 0 a32(k) 0;0 kt*a33(k)/R 0 0 a33(k)];
     
     %transfer functions
     sys_mimo = ss(A,B,C,D,'statename',states,...
@@ -142,11 +158,12 @@ for k = 1:L1
     T_2x3{k} = tf_simple(:,3:5);
 
     %generate controller
-    %C_2x2(:,:,k) = tf_to_C(T_2x2);
+    C_2x2(:,:,k) = tf_to_C(T_2x2{k},wc_2,wc_3);
 
     %convert symbolic TF to tf object
 end
 
+close(h) 
 
 %calculate system responce from mechanical load torques
 N = 10;
@@ -158,6 +175,9 @@ Te_2_adj = Te_2_responce;
 Te_3_adj = Te_2_responce;
 v_2_expected = Te_2_responce;
 v_3_expected = Te_2_responce;
+
+Te_2_expected = Te_2_responce;
+Te_3_expected = Te_2_responce;
 
 h = waitbar(0,'Generating system responce...');
 
@@ -185,20 +205,37 @@ for k = N+1:L2-(N+1)
     v_3_expected(k) = y(N+1,2);
 end
 close(h) 
-Te_2_repsonce2 = lsim(T_2x3{25},[Tm_1' Tm_2' Tm_3'],t_fine);
+Te_2_repsonce2 = lsim(T_2x3{20},[Tm_1' Tm_2' Tm_3'],t_fine);
 v_2_expected2 = lsim(inv(T_2x2{25}),[Te_2_adj' Te_3_adj'],t_fine);
-% Te_2_responce([1:N (L2-N):N]) = Te_2_responce(N+1);
-% Te_3_responce([1:N (L2-N):N]) = Te_3_responce(N+1);
-% Te_2_adj(1:N) = Te_2()-Te_2_responce(k);
-% Te_3_adj(1:N) = Te_3()-Te_3_responce(k);
 
+h = waitbar(0,'More nonsense...');
 
+for k = N+1:L2-(N+1)
+    waitbar(k / L2)
+    u = [v_2_expected(k-N:k+N)' v_3_expected(k-N:k+N)'];
+    y = lsim(T_2x2{floor(k*L1/L2)+1},u,t);
+    Te_2_expected(k) = y(N+1,1);
+    Te_3_expected(k) = y(N+1,2);
+end
+close(h) 
+
+Te_expected_0 = lsim(T_2x2{1},[v_2_expected' v_3_expected'],t_fine);
+Te_expected_20 = lsim(T_2x2{20},[v_2_expected' v_3_expected'],t_fine);
+Te_expected_40 = lsim(T_2x2{40},[v_2_expected' v_3_expected'],t_fine);
+
+figure
+subplot(2,1,1);
+plot(t_fine,Te_2_expected,t_fine,Te_expected_0(:,1),t_fine,Te_expected_20(:,1),t_fine,Te_expected_40(:,1),t_fine,Te_2_adj);
+legend('changing controllers','controler 1','controler 20','controler 40', 'adjusted desired torque signal');
+subplot(2,1,2);
+plot(t_fine,Te_3_expected,t_fine,Te_expected_0(:,2),t_fine,Te_expected_20(:,2),t_fine,Te_expected_40(:,2),t_fine,Te_3_adj);
+legend('changing controllers','controler 1','controler 20','controler 40', 'adjusted desired torque signal');
 %write data to csv
-% C_2x2_p = permute(C_2x2,[3 2 1]);
-% c1 = C_2x2_p(:,1,1);
-% c2 = C_2x2_p(:,2,1);
-% c3 = C_2x2_p(:,1,2);
-% c4 = C_2x2_p(:,2,2);
+%  C_2x2_p = permute(C_2x2,[3 2 1]);
+%  c1 = C_2x2_p(:,1,1);
+%  c2 = C_2x2_p(:,2,1);
+%  c3 = C_2x2_p(:,1,2);
+%  c4 = C_2x2_p(:,2,2);
 
 c1 = zeros(size(t_fine));
 c2 = c1; 

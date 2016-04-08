@@ -1,16 +1,15 @@
 
-# USER SPECIFIC - OLIVER
-comPorts = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421']
-dataFolder = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Results'
-torqueListPath = '/Users/olivergadsby/Desktop/outputControllers.csv'
-
-## USER SPECIFIC - RASPBERRY PI
+## USER SPECIFIC - OLIVER
 #comPorts = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421']
-#dataFolder = '/home/pi/GitStuff/459_Project_Code/Results'
-#torqueListPath = '/home/pi/GitStuff/459_Project_Code/Production Code/dummy_outputControllers.csv' # only one, need to modify file structure to accomodate more
+#dataFolder = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Results/'
+#matlabPath = dataFolder + 'MATLAB_Results/' + '04-01-16_13-16-16/'
+#torqueListPath = matlabPath + 'dataForPi.csv'
 
-
-
+# USER SPECIFIC - RASPBERRY PI
+comPorts = ['ttyACMO']
+dataFolder = '/home/pi/GitStuff/459_Project_Code/Results'
+matlabPath = dataFolder + 'MATLAB_Results/' + '04-07-16_14-06-53/'
+torqueListPath = matlabPath + 'dataForPi.csv'
 
 
 ######################### Interfacing Parameters #########################
@@ -33,7 +32,7 @@ maxADC  = 1024 #2^10
 
 ######################### Metadata Parameters #########################
 
-metadataNames = ['torqueListPath', 'shankLength', 'thighLength',
+metadataNames = ['matlabPath', 'torqueListPath', 'shankLength', 'thighLength',
 	'trunkLength', 'shankMass', 'thighMass', 'trunkMass', 'initialAngle_Knee',
 	'initialAngle_Hip', 'calibratedValues']	
 

@@ -5,7 +5,7 @@ import os
 
 class ioOperations:
 
-	# set as constant; 1 for Jan3-Jan9 start
+	# set as constant; 1 for Jan3_16-Jan9_16, start
 	projectWeekStart = 1
 
 	def __init__(self, dataDirectory):

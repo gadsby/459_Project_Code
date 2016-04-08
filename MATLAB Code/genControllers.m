@@ -30,9 +30,9 @@
 %   C1: t               - time
 %   C2: Te_2            - torque applied at 2nd joint (at armature)
 %   C3: Te_3            - torque applied at 3rd joint (at armature)
-%   C4: Te_2_responce   - responce of Te_2 due to load torques (at armature)
-%   C5: Te_3_responce   - responce of Te_3 due to load torques (at armature)
-%   C6: c1              -control matrix
+%   C4: Te_2_responce   - response of Te_2 due to load torques (at armature)
+%   C5: Te_3_responce   - response of Te_3 due to load torques (at armature)
+%   C6: c1              - control matrix
 %   C7: c2
 %   C8: c3
 %   C9: c4
@@ -47,6 +47,8 @@ function genControllers(opt_out_filename,pi_in_filename)
 
 global alpha beta J_rotor N
 %motor params
+
+warning('off')
 
 syms s;
 
@@ -63,7 +65,7 @@ M = csvread(opt_out_filename);
 
 %scale results to alpha and beta scaling if optimization was at full scale 
 %convert to rotor side of geartrain. Also Inverts A.
-M = scaledata(M,1,1,1);
+M = scaledata(M,0,1,1);
 
 t = M(:,1);
 dt_source = t(2)-t(1);
@@ -179,7 +181,7 @@ v_3_expected = Te_2_responce;
 Te_2_expected = Te_2_responce;
 Te_3_expected = Te_2_responce;
 
-h = waitbar(0,'Generating system responce...');
+h = waitbar(0,'Generating system response...');
 
 for k = N+1:L2-(N+1)
     waitbar(k / L2)
@@ -195,7 +197,7 @@ for k = N+1:L2-(N+1)
 end
 
 close(h) 
-h = waitbar(0,'Generating inverse system responce...');
+h = waitbar(0,'Generating inverse system response...');
 
 for k = N+1:L2-(N+1)
     waitbar(k / L2)
@@ -204,9 +206,10 @@ for k = N+1:L2-(N+1)
     v_2_expected(k) = y(N+1,1);
     v_3_expected(k) = y(N+1,2);
 end
-close(h) 
-Te_2_repsonce2 = lsim(T_2x3{20},[Tm_1' Tm_2' Tm_3'],t_fine);
-v_2_expected2 = lsim(inv(T_2x2{25}),[Te_2_adj' Te_3_adj'],t_fine);
+close(h)
+
+Te_2_repsonce2 = lsim(T_2x3{floor(L1/2)},[Tm_1' Tm_2' Tm_3'],t_fine);
+v_2_expected2 = lsim(inv(T_2x2{floor(L1/2)}),[Te_2_adj' Te_3_adj'],t_fine);
 
 h = waitbar(0,'More nonsense...');
 
@@ -220,8 +223,8 @@ end
 close(h) 
 
 Te_expected_0 = lsim(T_2x2{1},[v_2_expected' v_3_expected'],t_fine);
-Te_expected_20 = lsim(T_2x2{20},[v_2_expected' v_3_expected'],t_fine);
-Te_expected_40 = lsim(T_2x2{40},[v_2_expected' v_3_expected'],t_fine);
+Te_expected_20 = lsim(T_2x2{floor(L1/2)},[v_2_expected' v_3_expected'],t_fine);
+Te_expected_40 = lsim(T_2x2{L1},[v_2_expected' v_3_expected'],t_fine);
 
 figure
 subplot(2,1,1);

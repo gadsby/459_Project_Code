@@ -6,10 +6,10 @@ clc
 tic
 
 %% Defining initial position and angular velocity as well as other parameters
-global L0 L1 L2 L3 L4 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 Torque_2 Torque_3 teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 t_final dt  Time var_array_length 
+global L0 L1 L2 L3 L4 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 Torque_2_Mid Torque_2_End Torque_3_Mid Torque_3_End teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 t_final dt  Time var_array_length 
 
-L = 1.60;  % Total height of the human subject
-M = 2*53.7;  % Total mass of the human subject
+L = 1.60/2;  % Total height of the human subject
+M = 1.7;  % Total mass of the human subject
 L0 = 0.039*L; % foot height
 L1 = (0.285-0.039)*L; % Shank length
 L2 = (0.53-0.285)*L; % Thigh length
@@ -21,12 +21,19 @@ rCOM_3 = 0.626; % Proximal distance of center of mass of the HAT (Head, Arms, Tr
 rG_1 = 0.572; % Distal radius of gyration of the foot and shank segment given as a percent of shank length
 rG_2 = 0.653; % Distal radius of gyration of the thigh segment given as a percent of thigh length
 rG_3 = 0.798; % Proximal radius of gyration of HAT segment given as percent of trunk length
-M1 = 0.061*M; % Foot and shank mass
-M2 = 0.1*M; % Thigh mass
-M3 = 0.5*(0.678*M); % Half the mass of the HAT segment
-g = 9.8; % gravitational acceleration
-Torque_2 = -12; % Applied torque at the knee joint to generate the initial guess
-Torque_3 = 3; % Applied torque at the hip joint to generate the initial guess
+M1 = 2*0.061*M; % Foot and shank mass
+M2 = 2*0.1*M; % Thigh mass
+M3 = 2*0.5*(0.678*M); % Half the mass of the HAT segment
+g = 9.81; % gravitational acceleration
+%Torque_2 = -12; % Applied torque at the knee joint to generate the initial guess (100 -> -150)
+%Torque_3 = 3; % Applied torque at the hip joint to generate the initial guess (-50 -> 125)
+
+Torque_2_End = 4.8;
+Torque_2_Mid = -4.8;
+
+Torque_3_End = -4.8;
+Torque_3_Mid = 4.8;
+
 
 teta_01 = pi/2+5*pi/180; % Ankle angle - Initial condition
 teta_02 = 40*pi/180; % Knee angle - Initial condition
@@ -35,24 +42,38 @@ dteta_01 = 0 ; % Ankle angular velocity - Initial condition
 dteta_02 = 0; % Knee angular velocity - Initial condition
 dteta_03 = 0; % Hip angular velocity - Initial condition
 
-t_final = 0.5; % Pre-set terminal time
-dt = 0.01; % time step
+t_final = 0.5/sqrt(2); % Pre-set terminal time
+dt = 0.01/sqrt(2); % time step
 Time = 0:dt:t_final;
 var_array_length = length(Time); % Length of the array defining each design varibale
 
 %% Define names for saving files
-dataFolderName = 'fallingData3'; % Could use a better naming system and folder location
+rootResultsFolder = '/Users/olivergadsby/Desktop/ENPH 459/459_Project_Code/Results/MATLAB_Results/';
+nowStr = datestr(now,'mm-dd-yy_HH-MM-SS');
+dataFolderName = strcat(rootResultsFolder, nowStr);
 mkdir(dataFolderName);
 metadataForTorqueProfile_Name = strcat(dataFolderName, '/properties.csv');
 stateVariableCSV_Name = strcat(dataFolderName, '/stateVariables.csv');
+controlVariableCSV_Name = strcat(dataFolderName, '/controlVariables.csv');
 video_Name = strcat(dataFolderName, '/fallVideo.avi');
 results_Name = strcat(dataFolderName, '/results');
 finalOutputForPi_Name = strcat(dataFolderName, '/dataForPi.csv');
 
 %% Make Metadata File to Save Falling Properties
+metadataCell = {'timeStamp', nowStr; 'totalHeight', L; 'totalMass', M; 'footHeight', L0; 'shankLength', L1;...
+    'thighLength', L2; 'trunkLength', L3; 'headNeckLength', L4; 'centMass_1', rCOM_1; 'centMass_2', rCOM_2; 'centMass_3', rCOM_3;...
+    'radGyr_1', rG_1; 'radGyr_2', rG_2; 'radGyr_3', rG_3; 'footShankMass_half', M1; 'thighMass_half', M2;...
+    'headArmsTrunkMass_half', M3; 'heel_initAngle', teta_01; 'knee_initAngle', teta_02; 'hip_initAngle', teta_03;...
+    'heel_initAngVel', dteta_01; 'knee_initAngVel', dteta_02; 'hip_initAngVel', dteta_03; 'falltime', t_final; 'timeStep', dt};
 
-% TODO
-
+fid = fopen(metadataForTorqueProfile_Name, 'w');
+[nrows,ncols] = size(metadataCell);
+fprintf(fid,'%s\t%s\n',metadataCell{1,:});
+formatSpec = '%s\t%f\n';
+for row = 2:nrows
+    fprintf(fid,formatSpec,metadataCell{row,:});
+end
+fclose(fid);
 
 %% Defining initial guess for the optimization
 [Y_0,X_0] = ini_guess;
@@ -67,8 +88,8 @@ ini_guess_impact = ini_guess_motion(X_0);
 options = optimoptions(@fmincon,'Algorithm','active-set','MaxFunEvals',10^8,'MaxIter',4000,'TolX',1e-6,'TolCon',1e-6,'TolFun',1e-6,'Display','iter'); % setting desirable options for the optimization 
 [Y,fval,exitflag,output] = fmincon(@Obj_Fcn,Y_0,[],[],[],[],Y_lb,Y_ub,@NonLin_Cons,options); % running the fmincon optimization
 
-%% Generate CSV for state variables
-generateCSV(Y, stateVariableCSV_Name);
+%% Generate CSV for state and control variables
+generateCSV(Y, stateVariableCSV_Name, controlVariableCSV_Name);
 
 %% Plotting the motion of the optimal solution
 optimal_result_impact = optim_result_motion(Y, video_Name);
@@ -77,7 +98,7 @@ optimal_result_impact = optim_result_motion(Y, video_Name);
 Result_plotting(Y,X_0,optimal_result_impact,ini_guess_impact,Time);
 
 %% Generate Controllers for Raspberry Pi
-% genControllers(stateVariableCSV_Name, finalOutputForPi_Name)
+genControllers(controlVariableCSV_Name, finalOutputForPi_Name)
 
 %% Saving data
 save(results_Name)

@@ -1,7 +1,11 @@
 import time
 import RPi.GPIO as GPIO
 
-
+potentiometer_adc = 0
+SPICLK  = 0x12  #18
+SPIMOSI = 0x18  #24
+SPIMISO = 0x17  #23
+SPICS   = 0x19  #25
 
 # Setup GPIO
 GPIO.setmode(GPIO.BCM)
@@ -45,17 +49,12 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
 
 if __name__ == '__main__':
 
-    potentiometer_adc = 0
-    SPICLK  = 0x12  #18
-    SPIMOSI = 0x18  #24
-    SPIMISO = 0x17  #23
-    SPICS   = 0x19  #25
-
     for i in range(100):
         start = time.clock()
         res = readadc(potentiometer_adc, SPICLK, SPIMOSI, SPIMISO, SPICS)
         stop = time.clock()
         print('PotOutput: {}\tTimeDelay: {}'.format(res, stop-start))
         time.sleep(0.2)
+    GPIO.cleanup()
 
 

@@ -63,8 +63,8 @@ class torqueListManager:
 		C4 = self.Control4_EXPANDED[index]
 
 		controlMat = np.array([[C1,C2],[C3,C4]])
-		torques = np.array([self.kneeTorque_EXPANDED[index], self.hipTorque_EXPANDED[index]])
-		torqueResponses = np.array([self.kneeResponse_EXPANDED[index], self.hipResponse_EXPANDED[index]])
+		torques = np.array([[self.kneeTorque_EXPANDED[index]], [self.hipTorque_EXPANDED[index]]])
+		torqueResponses = np.array([[self.kneeResponse_EXPANDED[index]], [self.hipResponse_EXPANDED[index]]])
 
 		return torques, torqueResponses, controlMat
 

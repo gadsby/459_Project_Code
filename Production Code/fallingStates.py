@@ -156,8 +156,11 @@ class fallingSM:
 		angVel_knee, angVel_hip, angVel_heel = [0]*3
 		angAcc_knee, angAcc_hip, angAcc_heel = [0]*3
 
-		timeStart, timeLast = time.clock(), 0
-		timeNow, timeStep = time.clock() - timeStart, 10e6 # initialize timeStep as large value
+		intError = np.zeros((2,1))
+		intErrorMax = 1000
+
+		timeStart, timeLast = time.time(), 0
+		timeNow, timeStep = time.time() - timeStart, 10e-9 # initialize timeStep as small value
 
 		while True:
 			
@@ -176,13 +179,19 @@ class fallingSM:
 			angAcc_knee, angAcc_hip, angAcc_heel = np.array([angVel_knee-last_angVel_knee, 
 				angVel_hip-last_angVel_hip, angVel_heel-last_angVel_heel]) / timeStep
 
+			# get lastPwm to give sign of currents
+
 			actualTorques = config.torque_motorConstant * operationFuncs.readCurrents()
 
 			# CONTROL OPERATIONS
 			EM_torqueFeedback_adjust = actualTorques - torqueResponses
 			EM_torque_adjust = desiredTorques - torqueResponses
-			error = EM_torque_adjust - EM_torqueFeedback_adjust
-			outputVoltages = np.dot(controlMat, error)
+			errorNow = EM_torque_adjust - EM_torqueFeedback_adjust
+
+			# INTEGRAL ERROR
+			intError += errorNow*timeStep
+			#intError = [(i/abs(i)) * intErrorMax for i in intError if abs(i) > intErrorMax]
+			outputVoltages = np.dot(controlMat, intError)
 
 			# GET PWM INPUT FROM VOLTAGES
 			mapVoltageToByte = lambda x: (int(x) * 255) // 12
@@ -193,16 +202,18 @@ class fallingSM:
 			#operationFuncs.setMotors(pwm_Knee=pwm_Knee, pwm_Hip=pwm_Hip)
 
 			# ASSIGN DATA TO DATA ARRAY
-			self.fallingData[dataIndex, :] = [timeNow, kneeAngle, hipAngle, heelAngle] + actualTorques.tolist()
+			unpackList = lambda list2Unpack: [list2Unpack[0][0],list2Unpack[1][0]]
+			self.fallingData[dataIndex, :] = [timeNow, kneeAngle, hipAngle, heelAngle] + unpackList(actualTorques.tolist())
 			dataIndex += 1
 
 			# UPDATE TIME CONDITIONS
-			timeLast, timeNow = timeNow, time.clock() - timeStart
+			timeLast, timeNow = timeNow, time.time() - timeStart
 			timeStep = timeNow - timeLast
 			if timeNow > config.torqueManager.timeLimit:
 				break
 
 		#operationFuncs.killMotors()
+
 		self.fallingData = self.fallingData[:dataIndex]
 
 		return
@@ -227,8 +238,6 @@ class fallingSM:
 		print('\nSAVING!')
 
 		ioStructure = dataSaving.ioOperations(config.dataFolder)
-		sessionDirectory = ioStructure.getSaveName()
-
 		fileName, fullPath = ioStructure.getSaveName()
 
 

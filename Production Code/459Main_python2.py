@@ -11,7 +11,7 @@ if __name__ == "__main__":
 	# MENU 1
 	menuOptions = { 
 		1:('Calibrate', operationFuncs.calibrate),
-		2:('Generate Torque List', operationFuncs.genTorqueList),
+		2:('Load Data Set', operationFuncs.genTorqueList),
 		3:('Exit', exit)
 		}
 
@@ -22,7 +22,7 @@ if __name__ == "__main__":
 	# MENU 2
 	menuOptions = { 
 		1:('Recalibrate', operationFuncs.calibrate),
-		2:('Generate New Torque List', operationFuncs.genTorqueList),
+		2:('Load New Data Set', operationFuncs.genTorqueList),
 		3:('Initiate Fall Procedure', fallingStates.fallingSM),
 		4:('Exit', exit)
 		}

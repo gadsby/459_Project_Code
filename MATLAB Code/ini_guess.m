@@ -8,7 +8,7 @@
 %%% dteta = [dteta_1 ; dteta_2 ; dteta_3 ; ddteta_1 ; ddteta_2 ; ddteta_3]
 %%% dteta = [teta(4) ; teta(5) ; teta(6) ; D(1) ; D(2) ; D(3)]
 function [Y_0,X_0] = ini_guess
-global L0 L1 L2 L3 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 dt Torque_2 Torque_3 teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 var_array_length
+global L0 L1 L2 L3 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 dt Torque_2_Mid Torque_2_End Torque_3_Mid Torque_3_End teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 var_array_length
 
 X_0(1,1) = teta_01;  % Ankle angle - Initial condition
 X_0(1,2) = teta_02;  % Knee angle - Initial condition
@@ -16,12 +16,8 @@ X_0(1,3) = teta_03;  % Hip angle - Initial condition
 X_0(1,4) = dteta_01; % Ankle angular velocity - Initial condition
 X_0(1,5) = dteta_02; % Knee angular velocity - Initial condition
 X_0(1,6) = dteta_03; % Hip angular velocity - Initial condition
-X_0(1,7) = Torque_2; % Applied torque at the knee joint to generate the initial guess
-X_0(1,8) = Torque_3; % Applied torque at the hip joint to generate the initial guess
-
-
-A = ones(var_array_length,3,3);
-C = ones(var_array_length,3,1);
+X_0(1,7) = Torque_2_End; % Applied torque at the knee joint to generate the initial guess
+X_0(1,8) = Torque_3_End; % Applied torque at the hip joint to generate the initial guess
 
 
 
@@ -69,8 +65,8 @@ for i = 2:var_array_length % Generating the initial guess using forward differen
     X_0(i,4) = dt*D(1)+ X_0(i-1,4);
     X_0(i,5) = dt*D(2)+ X_0(i-1,5);
     X_0(i,6) = dt*D(3)+ X_0(i-1,6);
-    X_0(i,7) = Torque_2;
-    X_0(i,8) = Torque_3;
+    X_0(i,7) = X_0(i-1,7) + ( (i < var_array_length/2) - (i > var_array_length/2) ) * (Torque_2_Mid - Torque_2_End)/var_array_length;
+    X_0(i,8) = X_0(i-1,8) + ( (i < var_array_length/2) - (i > var_array_length/2) ) * (Torque_3_Mid - Torque_3_End)/var_array_length;
 end
 
 Y_0 = X_0(:); % Initial guess in array format

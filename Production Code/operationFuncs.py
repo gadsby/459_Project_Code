@@ -10,34 +10,34 @@ import os
 import numpy as np
 
 # ELECTRICAL LIBRARIES
-#import roboclaw as rc
-#import RPi.GPIO as GPIO
+import roboclaw as rc
+import RPi.GPIO as GPIO
 
 
 
 ######################### Setup Electrical Interfacing #########################
 
-#motorDetected = False
-#for comPort in config.comPorts:
-#    try:
-#        motorDetected = rc.Open(port, config.baudRate)
-#    except:
-#        continue
-#if(not motorDetected):
-#    print('Motor port could not be opened.')
-#    print('Ports checked:')
-#    for i in config.comPorts:
-#    	print('\t'+i)
-# 	 print('Exiting...')
-#    exit()
+motorDetected = False
+for comPort in config.comPorts:
+    try:
+        motorDetected = rc.Open(port, config.baudRate)
+    except:
+        continue
+if(not motorDetected):
+    print('Motor port could not be opened.')
+    print('Ports checked:')
+    for i in config.comPorts:
+    	print('\t'+i)
+ 	 print('Exiting...')
+    exit()
 
 
-## INITIALIZE GPIO PORTS
-#GPIO.setmode(GPIO.BCM)
-#GPIO.setup(SPIMOSI, GPIO.OUT)
-#GPIO.setup(SPIMISO, GPIO.IN)
-#GPIO.setup(SPICLK, GPIO.OUT)
-#GPIO.setup(SPICS, GPIO.OUT)
+# INITIALIZE GPIO PORTS
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(config.SPIMOSI, GPIO.OUT)
+GPIO.setup(config.SPIMISO, GPIO.IN)
+GPIO.setup(config.SPICLK, GPIO.OUT)
+GPIO.setup(config.SPICS, GPIO.OUT)
 
 # put in error detection if ports aren't found
 
@@ -47,53 +47,52 @@ import numpy as np
 ######################### Electrical Interfacing Functions #########################
 
 # COMPLETE
-#def readadc(adcnum=config.potentiometer_adc, clockpin=config.SPICLK, mosipin=config.SPIMOSI,\
-#			misopin=config.SPIMISO, cspin=config.SPICS):
-#    GPIO.output(cspin, True)
-#    GPIO.output(clockpin, False)
-#    GPIO.output(cspin, False)
-#    commandout = (adcnum | 0x18) << 3
-#    for i in range(5):
-#        if (commandout & 0x80):
-#            GPIO.output(mosipin, True)
-#        else:
-#            GPIO.output(mosipin, False)
-#        commandout <<= 1
-#        GPIO.output(clockpin, True)
-#        GPIO.output(clockpin, False)
-#    adcout = 0
-#    for i in range(12):
-#        GPIO.output(clockpin, True)
-#        GPIO.output(clockpin, False)
-#        adcout <<= 1
-#        if (GPIO.input(misopin)):
-#            adcout |= 0x1
-#    GPIO.output(cspin, True)
-#    return adcout >> 1
+def readPot(adcnum=config.potentiometer_adc, clockpin=config.SPICLK, mosipin=config.SPIMOSI,\
+			misopin=config.SPIMISO, cspin=config.SPICS):
+    GPIO.output(cspin, True)
+    GPIO.output(clockpin, False)
+    GPIO.output(cspin, False)
+    commandout = (adcnum | 0x18) << 3
+    for i in range(5):
+        if (commandout & 0x80):
+            GPIO.output(mosipin, True)
+        else:
+            GPIO.output(mosipin, False)
+        commandout <<= 1
+        GPIO.output(clockpin, True)
+        GPIO.output(clockpin, False)
+    adcout = 0
+    for i in range(12):
+        GPIO.output(clockpin, True)
+        GPIO.output(clockpin, False)
+        adcout <<= 1
+        if (GPIO.input(misopin)):
+            adcout |= 0x1
+    GPIO.output(cspin, True)
+    return adcout >> 1
 
-# COMPLETE
-def readPot():
-    potVal = 0 #readadc()
-    return potVal
+## COMPLETE
+#def readPot():
+#    potVal = 1.5 #readadc()
+#    return potVal
 
 # IN PROGRESS; ALMOST COMPLETE
 def readAngles():
-	kneeAngle = 14 #rc.ReadEncM1()
-	hipAngle = 14 #rc.ReadEncM2()
+	kneeAngle = rc.ReadEncM1()
+	hipAngle = rc.ReadEncM2()
 	heelAngle = readPot()
 	return kneeAngle, hipAngle, heelAngle
 
 # IN PROGRESS
 def readCurrents():
-	kneeCurrent, hipCurrent = [0.01]*2
-	return np.array([kneeCurrent, hipCurrent])
-
-#	currents = rc.ReadCurrents()
-#	if currents[0]:
-#		kneeCurrent, hipCurrent = currents[1:] #make sure order is correct
-#		return np.array([kneeCurrent, hipCurrent])
-#	else:
-#		return -10*np.ones((1,2))
+#	kneeCurrent, hipCurrent = [0.01]*2
+#	return np.array([[kneeCurrent], [hipCurrent]])
+	currents = rc.ReadCurrents()
+	if currents[0]:
+		kneeCurrent, hipCurrent = currents[1:] #make sure order is correct
+		return np.array([kneeCurrent, hipCurrent])
+	else:
+		return -10*np.ones((1,2))
 
 
 
@@ -106,15 +105,15 @@ def calibrate():
 
 
 # COMPLETE
-#def setMotors(pwm_Knee, pwm_Hip):
-#	rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM1(config.address, -pwm_Knee)
-#	rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM2(config.address, -pwm_Hip)
-#	return
+def setMotors(pwm_Knee, pwm_Hip):
+	rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM1(config.address, -pwm_Knee)
+	rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM2(config.address, -pwm_Hip)
+	return
 
 # COMPLETE
-#def killMotors():
-#	setMotors(0, 0)
-#	return
+def killMotors():
+	setMotors(0, 0)
+	return
 
 
 

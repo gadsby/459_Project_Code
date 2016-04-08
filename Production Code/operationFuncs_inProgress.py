@@ -35,22 +35,6 @@ def getPulseFromAngle(angleKnee, angleHip):
     return position_Knee, position_Hip
 
 
-# MAYBE GOOD; save data on branch cut, can make continuous later?
-def getAngleFromPulse(pulseKnee, pulseHip):
-    angleKnee = ((pulseKnee - config.calibratedValues[0]) % config.pulsePerRotation) * np.pi/config.pulsePerRotation
-    angleHip =  ((pulseHip -  config.calibratedValues[1]) % config.pulsePerRotation) * np.pi/config.pulsePerRotation
-    return angleKnee, angleHip
-
-
-# 768(=12*64) pulses per rotation
-# operate on ring mod 768
-
-
-
-
-
-
-
 
 
 

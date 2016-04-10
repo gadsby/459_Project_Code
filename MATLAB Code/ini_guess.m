@@ -8,7 +8,7 @@
 %%% dteta = [dteta_1 ; dteta_2 ; dteta_3 ; ddteta_1 ; ddteta_2 ; ddteta_3]
 %%% dteta = [teta(4) ; teta(5) ; teta(6) ; D(1) ; D(2) ; D(3)]
 function [Y_0,X_0] = ini_guess
-global L0 L1 L2 L3 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 dt Torque_2_Mid Torque_2_End Torque_3_Mid Torque_3_End teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 var_array_length
+global N J_rotor L0 L1 L2 L3 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 dt Torque_2_Mid Torque_2_End Torque_3_Mid Torque_3_End teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 var_array_length
 
 X_0(1,1) = teta_01;  % Ankle angle - Initial condition
 X_0(1,2) = teta_02;  % Knee angle - Initial condition
@@ -36,7 +36,7 @@ for i = 2:var_array_length % Generating the initial guess using forward differen
     a21 = M2*(rG_2^2*L2^2+rCOM_2*(L0+L1)*L2*cos(X_0(i-1,2)))...
         +M3*(rG_3^2*L3^2+L2^2+2*rCOM_3*L2*L3*cos(X_0(i-1,3))+(L0+L1)*L2*cos(X_0(i-1,2))+rCOM_3*(L0+L1)*L3*cos(X_0(i-1,2)+X_0(i-1,3)));
     a22 = rG_2^2*M2*L2^2 ...
-        +M3*(rG_3^2*L3^2+L2^2+2*rCOM_3*L2*L3*cos(X_0(i-1,3)));
+        +M3*(rG_3^2*L3^2+L2^2+2*rCOM_3*L2*L3*cos(X_0(i-1,3))) + N^2*J_rotor;
     a23 = M3*(rG_3^2*L3^2+rCOM_3*L2*L3*cos(X_0(i-1,3)));
     c21 = M3*(2*rCOM_3*L3*L2*sin(X_0(i-1,3))*X_0(i-1,6)+L2*(L0+L1)*sin(X_0(i-1,2))*X_0(i-1,5)+rCOM_3*(L0+L1)*L3*sin(X_0(i-1,2)+X_0(i-1,3))*(X_0(i-1,5)+X_0(i-1,6)))*X_0(i-1,4)...
         +M3*2*rCOM_3*L3*L2*sin(X_0(i-1,3))*X_0(i-1,6)*X_0(i-1,5)...
@@ -49,7 +49,7 @@ for i = 2:var_array_length % Generating the initial guess using forward differen
 
     a31 = M3*(rG_3^2*L3^2+rCOM_3*L3*L2*cos(X_0(i-1,3))+rCOM_3*L3*(L0+L1)*cos(X_0(i-1,2)+X_0(i-1,3)));
     a32 = M3*(rG_3^2*L3^2+rCOM_3*L3*L2*cos(X_0(i-1,3)));
-    a33 = M3*rG_3^2*L3^2;
+    a33 = M3*rG_3^2*L3^2 + N^2*J_rotor;
     c31 = M3*(rCOM_3*L3*L2*sin(X_0(i-1,3))*X_0(i-1,6)+rCOM_3*L3*(L0+L1)*sin(X_0(i-1,2)+X_0(i-1,3))*(X_0(i-1,5)+X_0(i-1,6)))*X_0(i-1,4)...
         +M3*(rCOM_3*L3*L2*sin(X_0(i-1,3))*X_0(i-1,6))*X_0(i-1,5)...
         -M3*rCOM_3*L3*(X_0(i-1,4)+X_0(i-1,5)+X_0(i-1,6))*(X_0(i-1,4)*(L2*sin(X_0(i-1,3))+(L0+L1)*sin(X_0(i-1,2)+X_0(i-1,3)))+L2*X_0(i-1,5)*sin(X_0(i-1,3)))...

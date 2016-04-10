@@ -6,10 +6,14 @@
 #torqueListPath = matlabPath + 'dataForPi.csv'
 
 # USER SPECIFIC - RASPBERRY PI
-comPorts = ['ttyACMO']
+comPorts = ['/dev/ttyACM0']
 dataFolder = '/home/pi/GitStuff/459_Project_Code/Results'
-matlabPath = dataFolder + 'MATLAB_Results/' + '04-07-16_14-06-53/'
+matlabPath = dataFolder + 'MATLAB_Results/' + '04-10-16_14-46-19/'
 torqueListPath = matlabPath + 'dataForPi.csv'
+
+
+# LIST OF EXPERIMENT DATA SETS
+# 	CONSTANT TORQUE: '04-10-16_14-46-19/'
 
 
 ######################### Interfacing Parameters #########################

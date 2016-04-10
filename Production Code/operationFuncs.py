@@ -20,15 +20,16 @@ import RPi.GPIO as GPIO
 motorDetected = False
 for comPort in config.comPorts:
     try:
-        motorDetected = rc.Open(port, config.baudRate)
+        motorDetected = rc.Open(comPort, config.baudRate)
+		break
     except:
         continue
-if(not motorDetected):
+if not motorDetected:
     print('Motor port could not be opened.')
     print('Ports checked:')
     for i in config.comPorts:
     	print('\t'+i)
- 	 print('Exiting...')
+ 	print('Exiting...')
     exit()
 
 
@@ -76,10 +77,10 @@ def readPot(adcnum=config.potentiometer_adc, clockpin=config.SPICLK, mosipin=con
 #    potVal = 1.5 #readadc()
 #    return potVal
 
-# IN PROGRESS; ALMOST COMPLETE
+# COMPLETE
 def readAngles():
-	kneeAngle = rc.ReadEncM1()
-	hipAngle = rc.ReadEncM2()
+	kneeAngle = int(rc.ReadEncM1(config.address)[1])
+	hipAngle = int(rc.ReadEncM2(config.address)[1])
 	heelAngle = readPot()
 	return kneeAngle, hipAngle, heelAngle
 
@@ -87,7 +88,7 @@ def readAngles():
 def readCurrents():
 #	kneeCurrent, hipCurrent = [0.01]*2
 #	return np.array([[kneeCurrent], [hipCurrent]])
-	currents = rc.ReadCurrents()
+	currents = rc.ReadCurrents(config.address)
 	if currents[0]:
 		kneeCurrent, hipCurrent = currents[1:] #make sure order is correct
 		return np.array([kneeCurrent, hipCurrent])

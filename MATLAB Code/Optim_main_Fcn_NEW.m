@@ -6,33 +6,41 @@ clc
 tic
 
 %% Defining initial position and angular velocity as well as other parameters
-global L0 L1 L2 L3 L4 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 Torque_2_Mid Torque_2_End Torque_3_Mid Torque_3_End teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 t_final dt  Time var_array_length 
+global alpha beta N J_rotor L0 L1 L2 L3 L4 M1 M2 M3 rCOM_1 rCOM_2 rCOM_3 g rG_1 rG_2 rG_3 Torque_2_Mid Torque_2_End Torque_3_Mid Torque_3_End teta_01 teta_02 teta_03 dteta_01 dteta_02 dteta_03 t_final dt  Time var_array_length 
 
-L = 1.60/2;  % Total height of the human subject
-M = 1.7;  % Total mass of the human subject
+N = 64; % speed reduction factor
+J_rotor = 5.7e-7; % rotor inertia
+alpha = 1/2; % length scaling factor
+beta = 1/32; % mass scaling factor
+
+L = 1.60*alpha;  % Total height of the human subject
+M = 1.3400;%53.7*beta;  % Total mass of the human subject
 L0 = 0.039*L; % foot height
 L1 = (0.285-0.039)*L; % Shank length
 L2 = (0.53-0.285)*L; % Thigh length
 L3 = (0.818-0.53)*L; % Trunk length
 L4 = (1-0.818)*L; % Head and neck length
-rCOM_1 = 0.394; % Distal distance of center of mass of the foot and shank segment given as a percent of shank length
-rCOM_2 = 0.567; % Distal distance of center of mass of the thigh segment given as a percent of thigh length
-rCOM_3 = 0.626; % Proximal distance of center of mass of the HAT (Head, Arms, Trunk) segment given as a percent of trunk length
-rG_1 = 0.572; % Distal radius of gyration of the foot and shank segment given as a percent of shank length
-rG_2 = 0.653; % Distal radius of gyration of the thigh segment given as a percent of thigh length
-rG_3 = 0.798; % Proximal radius of gyration of HAT segment given as percent of trunk length
-M1 = 2*0.061*M; % Foot and shank mass
-M2 = 2*0.1*M; % Thigh mass
-M3 = 2*0.5*(0.678*M); % Half the mass of the HAT segment
+rCOM_1 = 0.4597; % Distal distance of center of mass of the foot and shank segment given as a percent of shank length
+rCOM_2 = 0.3971; % Distal distance of center of mass of the thigh segment given as a percent of thigh length
+rCOM_3 = 0.3755; % Proximal distance of center of mass of the HAT (Head, Arms, Trunk) segment given as a percent of trunk length
+rG_1 = 0.3766; % Distal radius of gyration of the foot and shank segment given as a percent of shank length
+rG_2 = 0.3781; % Distal radius of gyration of the thigh segment given as a percent of thigh length
+rG_3 = 0.2338; % Proximal radius of gyration of HAT segment given as percent of trunk length
+M1 = 0.2256; % Foot and shank mass
+M2 = 0.5620; % Thigh mass
+M3 = 0.7354; % Half the mass of the HAT segment
 g = 9.81; % gravitational acceleration
 %Torque_2 = -12; % Applied torque at the knee joint to generate the initial guess (100 -> -150)
 %Torque_3 = 3; % Applied torque at the hip joint to generate the initial guess (-50 -> 125)
 
-Torque_2_End = 4.8;
-Torque_2_Mid = -4.8;
+a = -0.03 * 4.8;
+b = -0.002 * 4.8;
 
-Torque_3_End = -4.8;
-Torque_3_Mid = 4.8;
+Torque_2_End = a;%-0.03*4.8;
+Torque_2_Mid = a;%-0.03*4.8;
+
+Torque_3_End = b;%-0.002*4.8;
+Torque_3_Mid = b;%-0.002*4.8;
 
 
 teta_01 = pi/2+5*pi/180; % Ankle angle - Initial condition
@@ -84,9 +92,10 @@ ini_guess_impact = ini_guess_motion(X_0);
 %% Defining the upper and lower bounds of design variables (states)
 [Y_lb,Y_ub] = lub;
 
-%% Solving the optimization problem
-options = optimoptions(@fmincon,'Algorithm','active-set','MaxFunEvals',10^8,'MaxIter',4000,'TolX',1e-6,'TolCon',1e-6,'TolFun',1e-6,'Display','iter'); % setting desirable options for the optimization 
-[Y,fval,exitflag,output] = fmincon(@Obj_Fcn,Y_0,[],[],[],[],Y_lb,Y_ub,@NonLin_Cons,options); % running the fmincon optimization
+% %% Solving the optimization problem
+% options = optimoptions(@fmincon,'Algorithm','active-set','MaxFunEvals',10^8,'MaxIter',4000,'TolX',1e-6,'TolCon',1e-6,'TolFun',1e-6,'Display','iter'); % setting desirable options for the optimization 
+% [Y,fval,exitflag,output] = fmincon(@Obj_Fcn,Y_0,[],[],[],[],Y_lb,Y_ub,@NonLin_Cons,options); % running the fmincon optimization
+Y = Y_0;
 
 %% Generate CSV for state and control variables
 generateCSV(Y, stateVariableCSV_Name, controlVariableCSV_Name);

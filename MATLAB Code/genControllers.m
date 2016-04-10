@@ -65,7 +65,7 @@ M = csvread(opt_out_filename);
 
 %scale results to alpha and beta scaling if optimization was at full scale 
 %convert to rotor side of geartrain. Also Inverts A.
-M = scaledata(M,0,1,1);
+M = scaledata(M,0,1,0);
 
 t = M(:,1);
 dt_source = t(2)-t(1);
@@ -103,7 +103,7 @@ Tm_3 = Tnet_3 - Te_3;
 
 %find fft of input signal
 
-wc_2 = findMaxOmega(Te_2,dt,0);
+wc_2 = findMaxOmega(Te_2,dt,1);
 wc_3 = findMaxOmega(Te_3,dt,0);
 
 %state space rep
@@ -151,7 +151,8 @@ for k = 1:L1
           %subplot(2,5,(i-1)*5+(j));
           n = num{i,j};
           d = den{i,j};
-          tf_simple(i,j) = tf(n(1:3),d(1:3));
+          %tf_simple(i,j) = tf(n(1:3),d(1:3));
+          tf_simple(i,j) = tf(n,d);
           %bodeplot(TF(i,j),tf_simple(i,j),'r--');
        end
     end
@@ -168,7 +169,7 @@ end
 close(h) 
 
 %calculate system responce from mechanical load torques
-N = 10;
+N = 20;
 L2 = length(Te_2);
 t = -N*dt:dt:N*dt;
 Te_2_responce = zeros(size(Te_2));
@@ -223,7 +224,7 @@ end
 close(h) 
 
 Te_expected_0 = lsim(T_2x2{1},[v_2_expected' v_3_expected'],t_fine);
-Te_expected_20 = lsim(T_2x2{floor(L1/2)},[v_2_expected' v_3_expected'],t_fine);
+Te_expected_20 = lsim(T_2x2{30},[v_2_expected' v_3_expected'],t_fine);
 Te_expected_40 = lsim(T_2x2{L1},[v_2_expected' v_3_expected'],t_fine);
 
 figure

@@ -7,7 +7,7 @@
 
 # USER SPECIFIC - RASPBERRY PI
 comPorts = ['/dev/ttyACM0']
-dataFolder = '/home/pi/GitStuff/459_Project_Code/Results'
+dataFolder = '/home/pi/GitStuff/459_Project_Code/Results/'
 matlabPath = dataFolder + 'MATLAB_Results/' + '04-10-16_14-46-19/'
 torqueListPath = matlabPath + 'dataForPi.csv'
 
@@ -65,8 +65,8 @@ thighMass = 1
 trunkMass = 1
 
 # INITIAL ANGLES
-initialAngle_Knee = 0
-initialAngle_Hip = 0
+initialAngle_Knee = 40
+initialAngle_Hip = -40
 
 
 

@@ -69,7 +69,7 @@ class fallingSM:
 		"""
 
 
-		#operationFuncs.set_motors()
+		operationFuncs.set_motors()
 		print('\nSTARTING!')
 		while True:
 			var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
@@ -93,7 +93,7 @@ class fallingSM:
 
 		"""
 
-		#operationFuncs.killMotors()
+		operationFuncs.killMotors()
 		print('\nNEUTRAL: Apparatus is set to neutral and awaiting feedback to restart.')
 		while True:
 			var = raw_input('Options: M (Main Menu) / R (Restart Falling)\n')
@@ -188,6 +188,14 @@ class fallingSM:
 			EM_torque_adjust = desiredTorques - torqueResponses
 			errorNow = EM_torque_adjust - EM_torqueFeedback_adjust
 
+	#		print(actualTorques.shape, actualTorques)
+	#		print EM_torqueFeedback_adjust.shape, EM_torqueFeedback_adjust
+	#		print torqueResponses.shape, torqueResponses
+	#		print EM_torque_adjust.shape, EM_torque_adjust
+	#		print desiredTorques.shape, desiredTorques
+	#		
+	#		print(errorNow.shape, errorNow)
+	#		print(intError.shape, intError)
 			# INTEGRAL ERROR
 			intError += errorNow*timeStep
 			#intError = [(i/abs(i)) * intErrorMax for i in intError if abs(i) > intErrorMax]
@@ -199,7 +207,7 @@ class fallingSM:
 			pwm_Knee, pwm_Hip = map(byteClipping, map(mapVoltageToByte, outputVoltages))
 
 			# CONTROL JOINTS
-			#operationFuncs.setMotors(pwm_Knee=pwm_Knee, pwm_Hip=pwm_Hip)
+			operationFuncs.setMotors(pwm_Knee=pwm_Knee, pwm_Hip=pwm_Hip)
 
 			# ASSIGN DATA TO DATA ARRAY
 			unpackList = lambda list2Unpack: [list2Unpack[0][0],list2Unpack[1][0]]
@@ -212,7 +220,7 @@ class fallingSM:
 			if timeNow > config.torqueManager.timeLimit:
 				break
 
-		#operationFuncs.killMotors()
+		operationFuncs.killMotors()
 
 		self.fallingData = self.fallingData[:dataIndex]
 

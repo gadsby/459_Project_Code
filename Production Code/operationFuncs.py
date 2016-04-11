@@ -21,7 +21,7 @@ motorDetected = False
 for comPort in config.comPorts:
     try:
         motorDetected = rc.Open(comPort, config.baudRate)
-		break
+	break
     except:
         continue
 if not motorDetected:
@@ -34,11 +34,13 @@ if not motorDetected:
 
 
 # INITIALIZE GPIO PORTS
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(config.SPIMOSI, GPIO.OUT)
 GPIO.setup(config.SPIMISO, GPIO.IN)
 GPIO.setup(config.SPICLK, GPIO.OUT)
 GPIO.setup(config.SPICS, GPIO.OUT)
+
 
 # put in error detection if ports aren't found
 
@@ -91,7 +93,7 @@ def readCurrents():
 	currents = rc.ReadCurrents(config.address)
 	if currents[0]:
 		kneeCurrent, hipCurrent = currents[1:] #make sure order is correct
-		return np.array([kneeCurrent, hipCurrent])
+		return np.array([kneeCurrent, hipCurrent]).reshape(2,1)
 	else:
 		return -10*np.ones((1,2))
 
@@ -107,8 +109,8 @@ def calibrate():
 
 # COMPLETE
 def setMotors(pwm_Knee, pwm_Hip):
-	rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM1(config.address, -pwm_Knee)
-	rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM2(config.address, -pwm_Hip)
+	rc.ForwardM2(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM1(config.address, -pwm_Knee)
+	rc.ForwardM1(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM2(config.address, -pwm_Hip)
 	return
 
 # COMPLETE
@@ -127,36 +129,36 @@ class fallConditionCheck (threading.Thread):
 		threading.Thread.__init__(self)
 		self.killEvent = killEvent
 		self.successEvent = successEvent
-		self.angVel_thresh = 0
-		self.timeInterval = 0.01
+		self.angDiff_thresh = 3
+		self.timeInterval = 0.05
 
 	# NOT FINAL CODE; only used as test
-	def run(self):
-		w = 0 # read angle 1
-		x = 0 # read angle 2
-		y = 0 # read angle 3
-		while not self.killEvent.is_set():
-			w += 1 # read angle 1
-			x += 1 # read angle 2
-			y += 1 # read angle 3
-			print(w,x,y)
-			time.sleep(0.2)
-			if y==x==w==2:
-				self.successEvent.set()
-				return
+#	def run(self):
+#		w = 0 # read angle 1
+#		x = 0 # read angle 2
+#		y = 0 # read angle 3
+#		while not self.killEvent.is_set():
+#			w += 1 # read angle 1
+#			x += 1 # read angle 2
+#			y += 1 # read angle 3
+#			print(w,x,y)
+#			time.sleep(0.2)
+#			if y==x==w==2:
+#				self.successEvent.set()
+#				return
 
 # TODO: modify run() to determine fall condition
 # Fall condition: read potentiometer, check if angular velocity above threshold, then run
-#	def run(self):
-#		while not self.killEvent.is_set():
-#			angle1 = readPot() # read potentiometer
-#			time.sleep(self.timeInterval)
-#			angle2 = readPot() # read potentiometer
-#			angVel = (angle2-angle1)/self.timeInterval
-#			print(angVel)
-#			if angVel > self.angVel_thresh:
-#				self.successEvent.set()
-#				return
+	def run(self):
+		while not self.killEvent.is_set():
+			angle1 = readPot() # read potentiometer
+			time.sleep(self.timeInterval)
+			angle2 = readPot() # read potentiometer
+			angDiff = (angle2-angle1)
+			#print(angDiff)
+			if angDiff > self.angDiff_thresh:
+				self.successEvent.set()
+				return
 
 
 
@@ -197,8 +199,25 @@ def menuAndCalling(menuOptions):
 
 	return
 
+def set_motors():
+    # implement way to get feedback on position for this
+    # write ascii animation to help move joints into position
+
+    accel = 10
+    speed = 20
+    decel = 10
+
+    position_Knee, position_Hip = mapAngleToPulse(config.initialAngle_Knee, config.initialAngle_Hip)
+    time.sleep(1)
+    rc.SpeedAccelDeccelPositionM1(config.address, accel, speed, decel, position_Knee, 0)
+    rc.SpeedAccelDeccelPositionM2(config.address, accel, speed, decel, position_Hip, 0)
+    time.sleep(1.5*2)
+    print('Knee Angle set to {}'.format(config.initialAngle_Knee))
+    print('Hip Angle set to {}'.format(config.initialAngle_Hip))
 
 
-
-
-
+# NEEDS WORK; non-bijective system makes this trickier
+def getPulseFromAngle(angleKnee, angleHip):
+    position_Knee = angleKnee * config.pulsePerRotation/360.0 + config.calibratedValues[0]# + config.pulsePerRotation/4.0
+    position_Hip  = angleHip  * config.pulsePerRotation/360.0 + config.calibratedValues[1]# + config.pulsePerRotation/4.0
+    return position_Knee, position_Hip

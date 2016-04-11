@@ -13,7 +13,7 @@ import numpy as np
 
 class fallingSM:
 
-	dataSizeTuple = (250000, 6)
+	dataSizeTuple = (20000, 6)
 
 	def __init__(self):
 
@@ -67,16 +67,30 @@ class fallingSM:
 				nextState -- Desired next state based on user input; 'N' for Neutral, 'P' for Primed, 'M' for Main Menu.
 
 		"""
+###
 
-
-		operationFuncs.set_motors()
+		killCondition = threading.Event()
+		positionControl = operationFuncs.positionControl(killCondition)
+		positionControl.start()
 		print('\nSTARTING!')
 		while True:
-			var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
-			if var in ['N', 'P', 'M']:
-				return var
-			else:
-				print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
+        		var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
+        		if var in ['N', 'P', 'M']:
+                		killCondition.set()
+                		operationFuncs.killMotors()
+                		return var
+        	else:
+                	print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
+
+###
+	#	operationFuncs.set_motors()
+	#	print('\nSTARTING!')
+	#	while True:
+	#		var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
+	#		if var in ['N', 'P', 'M']:
+	#			return var
+	#		else:
+	#			print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
 
 
 	# WAIT STATE (COMPLETE)

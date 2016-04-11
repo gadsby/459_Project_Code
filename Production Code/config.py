@@ -21,7 +21,7 @@ torqueListPath = matlabPath + 'dataForPi.csv'
 # MOTOR PARAMS
 address = 0x80
 baudRate = 115200
-pulsePerRotation = 768 	#12*64
+pulsePerRotation = 768*4 	#12*64
 
 # ADC PARAMS
 potentiometer_adc = 0

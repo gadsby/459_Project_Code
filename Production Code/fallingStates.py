@@ -69,15 +69,15 @@ class fallingSM:
 		"""
 ###
 
-		killCondition = threading.Event()
-		positionControl = operationFuncs.positionControl(killCondition)
+		killCondition_push = threading.Event()
+		positionControl = operationFuncs.positionControl(killCondition_push)
 		positionControl.start()
 		print('\nSTARTING!')
 		while True:
         		var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
         		if var in ['N', 'P', 'M']:
-                		killCondition.set()
-                		operationFuncs.killMotors()
+                		killCondition_push.set()
+                		#operationFuncs.killMotors()
                 		return var
         	else:
                 	print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
@@ -173,6 +173,8 @@ class fallingSM:
 		intError = np.zeros((2,1))
 		intErrorMax = 1000
 
+		lastPWM, outputVoltages = np.array([0,0]).reshape(2,1), np.array([0,0]).reshape(2,1)
+
 		timeStart, timeLast = time.time(), 0
 		timeNow, timeStep = time.time() - timeStart, 10e-9 # initialize timeStep as small value
 
@@ -195,7 +197,7 @@ class fallingSM:
 
 			# get lastPwm to give sign of currents
 
-			actualTorques = config.torque_motorConstant * operationFuncs.readCurrents()
+			actualTorques = config.torque_motorConstant * np.sign(lastPWM) * operationFuncs.readCurrents()
 
 			# CONTROL OPERATIONS
 			EM_torqueFeedback_adjust = actualTorques - torqueResponses
@@ -213,8 +215,9 @@ class fallingSM:
 			# INTEGRAL ERROR
 			intError += errorNow*timeStep
 			#intError = [(i/abs(i)) * intErrorMax for i in intError if abs(i) > intErrorMax]
-			outputVoltages = np.dot(controlMat, intError)
-
+			outputVoltages, lastPWM = np.dot(controlMat, intError), outputVoltages
+			
+			
 			# GET PWM INPUT FROM VOLTAGES
 			mapVoltageToByte = lambda x: (int(x) * 255) // 12
 			byteClipping = lambda x: int(np.sign(x))*255 if abs(x) > 255 else x

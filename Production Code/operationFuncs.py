@@ -109,8 +109,8 @@ def calibrate():
 
 # COMPLETE
 def setMotors(pwm_Knee, pwm_Hip):
-	rc.ForwardM2(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM2(config.address, -pwm_Knee)
-	rc.ForwardM1(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM1(config.address, -pwm_Hip)
+	rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM2(config.address, -pwm_Knee)
+	rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM1(config.address, -pwm_Hip)
 	return
 
 # COMPLETE
@@ -239,7 +239,7 @@ class positionControl (threading.Thread):
         diff_KNEE, diff_HIP = 1e-9, 1e-9
         intError_KNEE, intError_HIP = 0, 0
 
-        kP = 0.8
+        kP = 100
         kD = 0.1
         kI = 0
 
@@ -248,18 +248,17 @@ class positionControl (threading.Thread):
         	diff_KNEE, oldDiff_KNEE = (currentEncoder_KNEE - target_KNEE), diff_KNEE
         	propError_KNEE, dervError_KNEE, intError_KNEE, = kP*diff_KNEE, (diff_KNEE - oldDiff_KNEE)/dt, intError_KNEE + diff_KNEE*dt
         	speed_KNEE = int(round(max(min(kP*propError_KNEE + kI*dervError_KNEE + kD*intError_KNEE, 0xFF), -255)))
-        	rc.ForwardM2(config.address, abs(speed_KNEE)) if speed_KNEE > 0 else rc.BackwardM2(config.address, abs(speed_KNEE))
+        	rc.ForwardM1(config.address, abs(speed_KNEE)) if speed_KNEE > 0 else rc.BackwardM1(config.address, abs(speed_KNEE))
 
         	currentEncoder_HIP = rc.ReadEncM1(config.address)[1]
         	diff_HIP, oldDiff_HIP = (currentEncoder_HIP - target_HIP), diff_HIP
         	propError_HIP, dervError_HIP, intError_HIP, = kP*diff_HIP, (diff_HIP - oldDiff_HIP)/dt, intError_HIP + diff_HIP*dt
         	speed_HIP = int(round(max(min(kP*propError_HIP + kI*dervError_HIP + kD*intError_HIP, 0xFF), -255)))
-        	rc.ForwardM1(config.address, abs(speed_HIP)) if speed_HIP > 0 else rc.BackwardM1(config.address, abs(speed_HIP))
+        	rc.ForwardM2(config.address, abs(speed_HIP)) if speed_HIP > 0 else rc.BackwardM2(config.address, abs(speed_HIP))
 		
 		print("Encoder Knee {}".format(currentEncoder_KNEE))
                 print("Encoder Hip {}".format(currentEncoder_HIP))
-	
-	killMotors()
+
 				
 if __name__ == "__main__":
 	while True:

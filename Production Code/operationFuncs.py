@@ -21,7 +21,7 @@ motorDetected = False
 for comPort in config.comPorts:
     try:
         motorDetected = rc.Open(comPort, config.baudRate)
-		break
+	break
     except:
         continue
 if not motorDetected:
@@ -34,11 +34,13 @@ if not motorDetected:
 
 
 # INITIALIZE GPIO PORTS
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(config.SPIMOSI, GPIO.OUT)
 GPIO.setup(config.SPIMISO, GPIO.IN)
 GPIO.setup(config.SPICLK, GPIO.OUT)
 GPIO.setup(config.SPICS, GPIO.OUT)
+
 
 # put in error detection if ports aren't found
 
@@ -79,8 +81,8 @@ def readPot(adcnum=config.potentiometer_adc, clockpin=config.SPICLK, mosipin=con
 
 # COMPLETE
 def readAngles():
-	kneeAngle = int(rc.ReadEncM1(config.address)[1])
-	hipAngle = int(rc.ReadEncM2(config.address)[1])
+	kneeAngle = int(rc.ReadEncM2(config.address)[1])
+	hipAngle = int(rc.ReadEncM1(config.address)[1])
 	heelAngle = readPot()
 	return kneeAngle, hipAngle, heelAngle
 
@@ -91,7 +93,7 @@ def readCurrents():
 	currents = rc.ReadCurrents(config.address)
 	if currents[0]:
 		kneeCurrent, hipCurrent = currents[1:] #make sure order is correct
-		return np.array([kneeCurrent, hipCurrent])
+		return np.array([kneeCurrent, hipCurrent]).reshape(2,1)
 	else:
 		return -10*np.ones((1,2))
 
@@ -107,8 +109,8 @@ def calibrate():
 
 # COMPLETE
 def setMotors(pwm_Knee, pwm_Hip):
-	rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM1(config.address, -pwm_Knee)
-	rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM2(config.address, -pwm_Hip)
+	rc.ForwardM1(config.address, pwm_Knee) if pwm_Knee >= 0 else rc.BackwardM2(config.address, -pwm_Knee)
+	rc.ForwardM2(config.address, pwm_Hip) if pwm_Hip >= 0 else rc.BackwardM1(config.address, -pwm_Hip)
 	return
 
 # COMPLETE
@@ -127,36 +129,36 @@ class fallConditionCheck (threading.Thread):
 		threading.Thread.__init__(self)
 		self.killEvent = killEvent
 		self.successEvent = successEvent
-		self.angVel_thresh = 0
-		self.timeInterval = 0.01
+		self.angDiff_thresh = 3
+		self.timeInterval = 0.05
 
 	# NOT FINAL CODE; only used as test
-	def run(self):
-		w = 0 # read angle 1
-		x = 0 # read angle 2
-		y = 0 # read angle 3
-		while not self.killEvent.is_set():
-			w += 1 # read angle 1
-			x += 1 # read angle 2
-			y += 1 # read angle 3
-			print(w,x,y)
-			time.sleep(0.2)
-			if y==x==w==2:
-				self.successEvent.set()
-				return
+#	def run(self):
+#		w = 0 # read angle 1
+#		x = 0 # read angle 2
+#		y = 0 # read angle 3
+#		while not self.killEvent.is_set():
+#			w += 1 # read angle 1
+#			x += 1 # read angle 2
+#			y += 1 # read angle 3
+#			print(w,x,y)
+#			time.sleep(0.2)
+#			if y==x==w==2:
+#				self.successEvent.set()
+#				return
 
 # TODO: modify run() to determine fall condition
 # Fall condition: read potentiometer, check if angular velocity above threshold, then run
-#	def run(self):
-#		while not self.killEvent.is_set():
-#			angle1 = readPot() # read potentiometer
-#			time.sleep(self.timeInterval)
-#			angle2 = readPot() # read potentiometer
-#			angVel = (angle2-angle1)/self.timeInterval
-#			print(angVel)
-#			if angVel > self.angVel_thresh:
-#				self.successEvent.set()
-#				return
+	def run(self):
+		while not self.killEvent.is_set():
+			angle1 = readPot() # read potentiometer
+			time.sleep(self.timeInterval)
+			angle2 = readPot() # read potentiometer
+			angDiff = (angle2-angle1)
+			#print(angDiff)
+			if angDiff > self.angDiff_thresh:
+				self.successEvent.set()
+				return
 
 
 
@@ -197,8 +199,68 @@ def menuAndCalling(menuOptions):
 
 	return
 
+# NEEDS WORK; non-bijective system makes this trickier
+def getPulseFromAngle(angleKnee, angleHip):
+    position_Knee = angleKnee * config.pulsePerRotation/360.0 + config.calibratedValues[0]# + config.pulsePerRotation/4.0
+    position_Hip  = angleHip  * config.pulsePerRotation/360.0 + config.calibratedValues[1]# + config.pulsePerRotation/4.0
+    return position_Knee, position_Hip
 
 
+def set_motors():
+    # implement way to get feedback on position for this
+    # write ascii animation to help move joints into position
+
+    accel = 12000
+    speed = 12000
+    decel = 12000
+
+    position_Knee, position_Hip = getPulseFromAngle(config.initialAngle_Knee, config.initialAngle_Hip)
+    time.sleep(1)
+    rc.SpeedAccelDeccelPositionM2(config.address,int(accel),int(speed), int(decel), int(position_Knee), 0)
+    rc.SpeedAccelDeccelPositionM1(config.address,int(accel), int(speed), int(decel), int(position_Hip), 0)
+    time.sleep(1.5*2)
+    print('Knee Angle set to {}'.format(config.initialAngle_Knee))
+    print('Hip Angle set to {}'.format(config.initialAngle_Hip))
 
 
+# COMPLETE
+class positionControl (threading.Thread):
+    def __init__(self, killEvent):
+        threading.Thread.__init__(self)
+        self.killEvent = killEvent
 
+    def run(self):
+        target_KNEE, target_HIP = getPulseFromAngle(config.initialAngle_Knee, config.initialAngle_Hip)
+        dt = 0.02
+
+	print ("Target Knee {}".format(target_KNEE))
+	print ("Target Hip {}".format(target_HIP))
+
+        diff_KNEE, diff_HIP = 1e-9, 1e-9
+        intError_KNEE, intError_HIP = 0, 0
+
+        kP = 100
+        kD = 0.1
+        kI = 0
+
+        while not self.killEvent.is_set():
+        	currentEncoder_KNEE = rc.ReadEncM2(config.address)[1]
+        	diff_KNEE, oldDiff_KNEE = (currentEncoder_KNEE - target_KNEE), diff_KNEE
+        	propError_KNEE, dervError_KNEE, intError_KNEE, = kP*diff_KNEE, (diff_KNEE - oldDiff_KNEE)/dt, intError_KNEE + diff_KNEE*dt
+        	speed_KNEE = int(round(max(min(kP*propError_KNEE + kI*dervError_KNEE + kD*intError_KNEE, 0xFF), -255)))
+        	rc.ForwardM1(config.address, abs(speed_KNEE)) if speed_KNEE > 0 else rc.BackwardM1(config.address, abs(speed_KNEE))
+
+        	currentEncoder_HIP = rc.ReadEncM1(config.address)[1]
+        	diff_HIP, oldDiff_HIP = (currentEncoder_HIP - target_HIP), diff_HIP
+        	propError_HIP, dervError_HIP, intError_HIP, = kP*diff_HIP, (diff_HIP - oldDiff_HIP)/dt, intError_HIP + diff_HIP*dt
+        	speed_HIP = int(round(max(min(kP*propError_HIP + kI*dervError_HIP + kD*intError_HIP, 0xFF), -255)))
+        	rc.ForwardM2(config.address, abs(speed_HIP)) if speed_HIP > 0 else rc.BackwardM2(config.address, abs(speed_HIP))
+		
+		print("Encoder Knee {}".format(currentEncoder_KNEE))
+                print("Encoder Hip {}".format(currentEncoder_HIP))
+
+				
+if __name__ == "__main__":
+	while True:
+		print readAngles()
+		time.sleep(0.2)

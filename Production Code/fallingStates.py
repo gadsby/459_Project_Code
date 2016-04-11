@@ -13,7 +13,7 @@ import numpy as np
 
 class fallingSM:
 
-	dataSizeTuple = (250000, 6)
+	dataSizeTuple = (20000, 6)
 
 	def __init__(self):
 
@@ -67,16 +67,30 @@ class fallingSM:
 				nextState -- Desired next state based on user input; 'N' for Neutral, 'P' for Primed, 'M' for Main Menu.
 
 		"""
+###
 
-
-		#operationFuncs.set_motors()
+		killCondition_push = threading.Event()
+		positionControl = operationFuncs.positionControl(killCondition_push)
+		positionControl.start()
 		print('\nSTARTING!')
 		while True:
-			var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
-			if var in ['N', 'P', 'M']:
-				return var
-			else:
-				print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
+        		var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
+        		if var in ['N', 'P', 'M']:
+                		killCondition_push.set()
+                		#operationFuncs.killMotors()
+                		return var
+        	else:
+                	print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
+
+###
+	#	operationFuncs.set_motors()
+	#	print('\nSTARTING!')
+	#	while True:
+	#		var = raw_input('Options: N (Neutral) / P (Primed) / M (Main Menu)\n')
+	#		if var in ['N', 'P', 'M']:
+	#			return var
+	#		else:
+	#			print('Invalid. Choose \'N\', \'P\', or \'M\'.\n')
 
 
 	# WAIT STATE (COMPLETE)
@@ -93,7 +107,7 @@ class fallingSM:
 
 		"""
 
-		#operationFuncs.killMotors()
+		operationFuncs.killMotors()
 		print('\nNEUTRAL: Apparatus is set to neutral and awaiting feedback to restart.')
 		while True:
 			var = raw_input('Options: M (Main Menu) / R (Restart Falling)\n')
@@ -159,6 +173,8 @@ class fallingSM:
 		intError = np.zeros((2,1))
 		intErrorMax = 1000
 
+		lastPWM, outputVoltages = np.array([0,0]).reshape(2,1), np.array([0,0]).reshape(2,1)
+
 		timeStart, timeLast = time.time(), 0
 		timeNow, timeStep = time.time() - timeStart, 10e-9 # initialize timeStep as small value
 
@@ -181,25 +197,34 @@ class fallingSM:
 
 			# get lastPwm to give sign of currents
 
-			actualTorques = config.torque_motorConstant * operationFuncs.readCurrents()
+			actualTorques = config.torque_motorConstant * np.sign(lastPWM) * operationFuncs.readCurrents()
 
 			# CONTROL OPERATIONS
 			EM_torqueFeedback_adjust = actualTorques - torqueResponses
 			EM_torque_adjust = desiredTorques - torqueResponses
 			errorNow = EM_torque_adjust - EM_torqueFeedback_adjust
 
+	#		print(actualTorques.shape, actualTorques)
+	#		print EM_torqueFeedback_adjust.shape, EM_torqueFeedback_adjust
+	#		print torqueResponses.shape, torqueResponses
+	#		print EM_torque_adjust.shape, EM_torque_adjust
+	#		print desiredTorques.shape, desiredTorques
+	#		
+	#		print(errorNow.shape, errorNow)
+	#		print(intError.shape, intError)
 			# INTEGRAL ERROR
 			intError += errorNow*timeStep
 			#intError = [(i/abs(i)) * intErrorMax for i in intError if abs(i) > intErrorMax]
-			outputVoltages = np.dot(controlMat, intError)
-
+			outputVoltages, lastPWM = np.dot(controlMat, intError), outputVoltages
+			
+			
 			# GET PWM INPUT FROM VOLTAGES
 			mapVoltageToByte = lambda x: (int(x) * 255) // 12
 			byteClipping = lambda x: int(np.sign(x))*255 if abs(x) > 255 else x
 			pwm_Knee, pwm_Hip = map(byteClipping, map(mapVoltageToByte, outputVoltages))
 
 			# CONTROL JOINTS
-			#operationFuncs.setMotors(pwm_Knee=pwm_Knee, pwm_Hip=pwm_Hip)
+			operationFuncs.setMotors(pwm_Knee=pwm_Knee, pwm_Hip=pwm_Hip)
 
 			# ASSIGN DATA TO DATA ARRAY
 			unpackList = lambda list2Unpack: [list2Unpack[0][0],list2Unpack[1][0]]
@@ -212,7 +237,7 @@ class fallingSM:
 			if timeNow > config.torqueManager.timeLimit:
 				break
 
-		#operationFuncs.killMotors()
+		operationFuncs.killMotors()
 
 		self.fallingData = self.fallingData[:dataIndex]
 
